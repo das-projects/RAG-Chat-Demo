@@ -126,7 +126,7 @@ def get_document_text(filename):
                         if idx >=0 and idx < page_length:
                             table_chars[idx] = table_id
 
-            # build page text by replacing charcters in table spans with table html
+            # build page text by replacing characters in table spans with table html
             page_text = ""
             added_tables = set()
             for idx, table_id in enumerate(table_chars):
@@ -237,7 +237,7 @@ def create_search_index():
             name=args.index,
             fields=[
                 SimpleField(name="id", type="Edm.String", key=True),
-                SearchableField(name="content", type="Edm.String", analyzer_name="en.microsoft"),
+                SearchableField(name="content", type="Edm.String", analyzer_name="de.microsoft"),
                 SearchField(name="embedding", type=SearchFieldDataType.Collection(SearchFieldDataType.Single), 
                             hidden=False, searchable=True, filterable=False, sortable=False, facetable=False,
                             vector_search_dimensions=1536, vector_search_configuration="default"),
