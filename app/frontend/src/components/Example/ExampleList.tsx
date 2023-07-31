@@ -9,11 +9,11 @@ export type ExampleModel = {
 
 const EXAMPLES: ExampleModel[] = [
     {
-        text: "What is included in my Northwind Health Plus plan that is not in standard?",
-        value: "What is included in my Northwind Health Plus plan that is not in standard?"
+        text: "Was ist bei der ERGO E-Bike Versicherung alles abgedeckt?",
+        value: "Was ist bei der ERGO E-Bike Versicherung alles abgedeckt?"
     },
-    { text: "What happens in a performance review?", value: "What happens in a performance review?" },
-    { text: "What does a Product Manager do?", value: "What does a Product Manager do?" }
+    { text: "Sind Reitbeteiligungen in meiner Pferdehaftpflichtversicherung mitversichert?", value: "Sind Reitbeteiligungen in meiner Pferdehaftpflichtversicherung mitversichert?" },
+    { text: "Sind Abschleppkosten in meiner KFZ Haftpflichtversicherung enthalten?", value: "Sind Abschleppkosten in meiner KFZ Haftpflichtversicherung enthalten?" }
 ];
 
 interface Props {
