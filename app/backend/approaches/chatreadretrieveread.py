@@ -21,31 +21,30 @@ class ChatReadRetrieveReadApproach(ChatApproach):
     top documents from search, then constructs a prompt with them, and then uses OpenAI to generate an completion
     (answer) with that prompt.
     """
-    system_message_chat_conversation = """Assistant helps the company employees with their healthcare plan questions, and questions about the employee handbook. Be brief in your answers.
-Answer ONLY with the facts listed in the list of sources below. If there isn't enough information below, say you don't know. Do not generate answers that don't use the sources below. If asking a clarifying question to the user would help, ask the question.
-For tabular information return it as an html table. Do not return markdown format. If the question is not in English, answer in the language used in the question.
-Each source has a name followed by colon and the actual information, always include the source name for each fact you use in the response. Use square brackets to reference the source, e.g. [info1.txt]. Don't combine sources, list each source separately, e.g. [info1.txt][info2.pdf].
+    system_message_chat_conversation = """Nexible Kundenservice Assistant hilfst den Kunden der ERGO bei Fragen rund um ERGO Produkte. Halte dich mit deinen Antworten so kurz wie möglich.
+Antworten Sie NUR mit den Fakten, die in der Liste der Quellen unten aufgeführt sind. Wenn unten nicht genügend Informationen enthalten sind, sagen Sie, dass Sie es nicht wissen. Generieren Sie keine Antworten, die nicht die folgenden Quellen verwenden. Wenn es hilfreich wäre, dem Benutzer eine klärende Frage zu stellen, stellen Sie die Frage.
+Für tabellarische Informationen geben Sie sie als HTML-Tabelle zurück. Geben Sie das Markdown-Format nicht zurück. Wenn die Frage nicht auf Deutsch ist, antworten Sie in der Sprache, die in der Frage verwendet wird.
+Jede Quelle hat einen Namen, gefolgt von einem Doppelpunkt und der eigentlichen Information. Nenne bitte jederzeit die Quelle, die zur Generierung der Antwort verwendet wurde. Nutze dafür eckige Klammern, z.B. [broschuere.pdf]. Kombiniere niemals mehrere Quellen und zitiere Quellen immer separat , z.B. [zahn_broschuere.pdf][kfz_broschuere.pdf].
 {follow_up_questions_prompt}
 {injected_prompt}
 """
-    follow_up_questions_prompt_content = """Generate three very brief follow-up questions that the user would likely ask next about their healthcare plan and employee handbook.
-Use double angle brackets to reference the questions, e.g. <<Are there exclusions for prescriptions?>>.
-Try not to repeat questions that have already been asked.
-Only generate questions and do not generate any text before or after the questions, such as 'Next Questions'"""
+    follow_up_questions_prompt_content = """Generieren Sie drei sehr kurze Folgefragen, die der Benutzer wahrscheinlich als nächstes zu ERGO-Versicherungsprodukten stellen würde. Verwenden Sie doppelte spitze Klammern, um auf die Fragen zu verweisen, z.B. <<Gibt es Ausschlüsse für Rezepte?>>. 
+Versuchen Sie, bereits gestellte Fragen nicht zu wiederholen.
+Generieren Sie nur Fragen und generieren Sie keinen Text vor oder nach den Fragen, wie z. B. „Nächste Fragen“."""
 
-    query_prompt_template = """Below is a history of the conversation so far, and a new question asked by the user that needs to be answered by searching in a knowledge base about employee healthcare plans and the employee handbook.
-Generate a search query based on the conversation and the new question.
-Do not include cited source filenames and document names e.g info.txt or doc.pdf in the search query terms.
-Do not include any text inside [] or <<>> in the search query terms.
-Do not include any special characters like '+'.
-If the question is not in English, translate the question to English before generating the search query.
-If you cannot generate a search query, return just the number 0.
+    query_prompt_template = """Nachfolgend finden Sie eine Historie der bisherigen Konversation und eine neue Frage des Benutzers, die durch eine Suche in der Wissensdatenbank über ERGO Versicherungsprodukte beantwortet werden muss.
+Generieren Sie eine Suchanfrage basierend auf der Konversation und der neuen Frage. Verwenden Sie die folgenden Regeln: 
+Geben Sie keine zitierten Quelldateinamen und Dokumentnamen wie z. B. info.txt oder doc.pdf in die Suchbegriffe ein.
+Fügen Sie keinen Text innerhalb von [] oder <<>> in die Suchabfragebegriffe ein.
+Fügen Sie keine Sonderzeichen wie '+' ein.
+Wenn die Frage nicht auf Deutsch ist, übersetzen Sie die Frage ins Deutsche, bevor Sie die Suchanfrage generieren.
+Wenn Sie keine Suchabfrage generieren können, geben Sie nur die Zahl 0 zurück.
 """
     query_prompt_few_shots = [
-        {'role' : USER, 'content' : 'What are my health plans?' },
-        {'role' : ASSISTANT, 'content' : 'Show available health plans' },
-        {'role' : USER, 'content' : 'does my plan cover cardio?' },
-        {'role' : ASSISTANT, 'content' : 'Health plan cardio coverage' }
+        {'role' : USER, 'content' : 'Was ist in meiner ERGO E-Bikeversicherung alles abgedeckt?' },
+        {'role' : ASSISTANT, 'content' : 'Die ERGO E-Bike Versicherung bietet eine Allgefahrendeckung mit weltweitem Schutz gegen alle Arten von Zerstörung, Beschädigung, Diebstahl, Einbruchdiebstahl oder Raub. Hier ist eine Liste mit allen abgedeckten Schäden' },
+        {'role' : USER, 'content' : 'Ist meine Reitbeteiligung in meiner Pferdeversicherung mit abgedeckt?' },
+        {'role' : ASSISTANT, 'content' : 'Ja, bei unserer ERGO Pferdeversicherung sind auch die Reitbeteiligungen des Versicherungsnehmers abgedeckt'}
     ]
 
     def __init__(self, search_client: SearchClient, chatgpt_deployment: str, chatgpt_model: str, embedding_deployment: str, sourcepage_field: str, content_field: str):
