@@ -21,7 +21,7 @@ class ChatReadRetrieveReadApproach(ChatApproach):
     top documents from search, then constructs a prompt with them, and then uses OpenAI to generate an completion
     (answer) with that prompt.
     """
-    system_message_chat_conversation = """Nexible Kundenservice Assistant hilfst den Kunden der ERGO bei Fragen rund um ERGO Produkte. Halte dich mit deinen Antworten so kurz wie möglich.
+    system_message_chat_conversation = """Nexible Kundenservice Assistant hilfst den Kunden der Nexible bei Fragen rund um Nexible Produkte. Halte dich mit deinen Antworten so kurz wie möglich.
 Antworten Sie NUR mit den Fakten, die in der Liste der Quellen unten aufgeführt sind. Wenn unten nicht genügend Informationen enthalten sind, sagen Sie, dass Sie es nicht wissen. Generieren Sie keine Antworten, die nicht die folgenden Quellen verwenden. Wenn es hilfreich wäre, dem Benutzer eine klärende Frage zu stellen, stellen Sie die Frage.
 Für tabellarische Informationen geben Sie sie als HTML-Tabelle zurück. Geben Sie das Markdown-Format nicht zurück. Wenn die Frage nicht auf Deutsch ist, antworten Sie in der Sprache, die in der Frage verwendet wird.
 Jede Quelle hat einen Namen, gefolgt von einem Doppelpunkt und der eigentlichen Information. Nenne bitte jederzeit die Quelle, die zur Generierung der Antwort verwendet wurde. Nutze dafür eckige Klammern, z.B. [broschuere.pdf]. Kombiniere niemals mehrere Quellen und zitiere Quellen immer separat , z.B. [zahn_broschuere.pdf][kfz_broschuere.pdf].
@@ -41,10 +41,10 @@ Wenn die Frage nicht auf Deutsch ist, übersetzen Sie die Frage ins Deutsche, be
 Wenn Sie keine Suchabfrage generieren können, geben Sie nur die Zahl 0 zurück.
 """
     query_prompt_few_shots = [
-        {'role' : USER, 'content' : 'Was ist in meiner ERGO E-Bikeversicherung alles abgedeckt?' },
-        {'role' : ASSISTANT, 'content' : 'Die ERGO E-Bike Versicherung bietet eine Allgefahrendeckung mit weltweitem Schutz gegen alle Arten von Zerstörung, Beschädigung, Diebstahl, Einbruchdiebstahl oder Raub. Hier ist eine Liste mit allen abgedeckten Schäden' },
+        {'role' : USER, 'content' : 'Was ist in meiner Nexible E-Bikeversicherung alles abgedeckt?' },
+        {'role' : ASSISTANT, 'content' : 'Die Nexible E-Bike Versicherung bietet eine Allgefahrendeckung mit weltweitem Schutz gegen alle Arten von Zerstörung, Beschädigung, Diebstahl, Einbruchdiebstahl oder Raub. Hier ist eine Liste mit allen abgedeckten Schäden' },
         {'role' : USER, 'content' : 'Ist meine Reitbeteiligung in meiner Pferdeversicherung mit abgedeckt?' },
-        {'role' : ASSISTANT, 'content' : 'Ja, bei unserer ERGO Pferdeversicherung sind auch die Reitbeteiligungen des Versicherungsnehmers abgedeckt'}
+        {'role' : ASSISTANT, 'content' : 'Ja, bei unserer Nexible Pferdeversicherung sind auch die Reitbeteiligungen des Versicherungsnehmers abgedeckt'}
     ]
 
     def __init__(self, search_client: SearchClient, chatgpt_deployment: str, chatgpt_model: str, embedding_deployment: str, sourcepage_field: str, content_field: str):
