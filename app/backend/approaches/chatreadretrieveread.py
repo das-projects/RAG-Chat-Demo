@@ -105,7 +105,7 @@ Wenn Sie keine Suchabfrage generieren können, geben Sie nur die Zahl 0 zurück.
             r = await self.search_client.search(query_text,
                                           filter=filter,
                                           query_type=QueryType.SEMANTIC,
-                                          query_language="en-us",
+                                          query_language="de-de",
                                           query_speller="lexicon",
                                           semantic_configuration_name="default",
                                           top=top,
