@@ -12,7 +12,7 @@ import { UserChatMessage } from "../../components/UserChatMessage";
 import { AnalysisPanel, AnalysisPanelTabs } from "../../components/AnalysisPanel";
 import { SettingsButton } from "../../components/SettingsButton";
 import { ClearChatButton } from "../../components/ClearChatButton";
-import ergo from "../../assets/ergo_logo.svg";
+import nexible from "../../assets/nexible_logo.svg";
 
 const Chat = () => {
     const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
@@ -137,8 +137,8 @@ const Chat = () => {
                         <div className={styles.chatEmptyState}>
                             {/* <SparkleFilled fontSize={"120px"} primaryFill={"rgba(115, 118, 225, 1)"} aria-hidden="true" aria-label="Chat logo" /> */}
                             <img
-                                src={ergo}
-                                alt="ERGO Logo"
+                                src={nexible}
+                                alt="Nexible Logo"
                                 width="300px"
                                 height="127px"
                                 className={styles.githubLogo}

@@ -9,11 +9,17 @@ export type ExampleModel = {
 
 const EXAMPLES: ExampleModel[] = [
     {
-        text: "Was ist bei der ERGO E-Bike Versicherung alles abgedeckt?",
-        value: "Was ist bei der ERGO E-Bike Versicherung alles abgedeckt?"
+        text: "Was ist bei der Nexible Reiserücktrittsversicherung alles abgedeckt?",
+        value: "Was ist bei der Nexible Reiserücktrittsversicherung alles abgedeckt?"
     },
-    { text: "Sind Reitbeteiligungen in meiner Pferdehaftpflichtversicherung mitversichert?", value: "Sind Reitbeteiligungen in meiner Pferdehaftpflichtversicherung mitversichert?" },
-    { text: "Sind Abschleppkosten in meiner KFZ Haftpflichtversicherung enthalten?", value: "Sind Abschleppkosten in meiner KFZ Haftpflichtversicherung enthalten?" }
+    {
+        text: "Welche Zahnzusatz-Tarife gibt es?",
+        value: "Welche Zahnzusatz-Tarife gibt es?"
+    },
+    {
+        text: "Wie kann ich Zahnarztrechnungen einreichen?",
+        value: "Wie kann ich Zahnarztrechnungen einreichen?"
+    }
 ];
 
 interface Props {
