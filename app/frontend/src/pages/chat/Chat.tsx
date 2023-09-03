@@ -189,7 +189,7 @@ const Chat = () => {
                     <div className={styles.chatInput}>
                         <QuestionInput
                             clearOnSend
-                            placeholder="Geben Sie hier Ihre Frage zu einem ERGO Produkt ein..."
+                            placeholder="Geben Sie hier Ihre Frage zu einem Nexible Produkt ein..."
                             disabled={isLoading}
                             onSend={question => makeApiRequest(question)}
                         />
