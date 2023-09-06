@@ -143,9 +143,9 @@ const Chat = () => {
                                 height="127px"
                                 className={styles.githubLogo}
                             />
-                            {/* <h1 className={styles.chatEmptyStateTitle}>ERGO GPT</h1>
-                            <h2 className={styles.chatEmptyStateSubtitle}>Wie ChatGPT, nur für ERGO</h2> */}
-                            <ExampleList onExampleClicked={onExampleClicked} />
+                            {/*<h1 className={styles.chatEmptyStateTitle}>Digitale Assitant von Nexible</h1>*/}
+                            {/*<h2 className={styles.chatEmptyStateSubtitle}>Ask anything or try an example</h2>*/}
+                            {/*<ExampleList onExampleClicked={onExampleClicked} />*/}
                         </div>
                     ) : (
                         <div className={styles.chatMessageStream}>
@@ -189,7 +189,7 @@ const Chat = () => {
                     <div className={styles.chatInput}>
                         <QuestionInput
                             clearOnSend
-                            placeholder="Geben Sie hier Ihre Frage zu einem Nexible Produkt ein..."
+                            placeholder="Hallo, ich bin der digitale Assistant von Nexible. Wie kann ich Ihnen beheilflich sein?"
                             disabled={isLoading}
                             onSend={question => makeApiRequest(question)}
                         />
