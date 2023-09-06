@@ -41,10 +41,24 @@ Wenn die Frage nicht auf Deutsch ist, übersetzen Sie die Frage ins Deutsche, be
 Wenn Sie keine Suchabfrage generieren können, geben Sie nur die Zahl 0 zurück.
 """
     query_prompt_few_shots = [
-        {'role' : USER, 'content' : 'Was ist in meiner Nexible E-Bikeversicherung alles abgedeckt?' },
-        {'role' : ASSISTANT, 'content' : 'Die Nexible E-Bike Versicherung bietet eine Allgefahrendeckung mit weltweitem Schutz gegen alle Arten von Zerstörung, Beschädigung, Diebstahl, Einbruchdiebstahl oder Raub. Hier ist eine Liste mit allen abgedeckten Schäden' },
-        {'role' : USER, 'content' : 'Ist meine Reitbeteiligung in meiner Pferdeversicherung mit abgedeckt?' },
-        {'role' : ASSISTANT, 'content' : 'Ja, bei unserer Nexible Pferdeversicherung sind auch die Reitbeteiligungen des Versicherungsnehmers abgedeckt'}
+        {'role' : USER, 'content' : 'Wann greift mein Reiserückrittsschutz?' },
+        {'role' : ASSISTANT, 'content' : 'Die Nexible Reiserücktrittsversicherung bietet Versicherungsschutz wenn Sie oder eine Ihnen nahestehende Person oder Ihr Reisepartner vor der Reise erkranken und die Reise deshalb nicht antreten können. ' },
+        {'role' : USER, 'content' : 'Ist eine professionelle Zahnreinigung in der Zahnzusatzversicherung abgedeckt?' },
+        {'role' : ASSISTANT, 'content' : 'Das hängt von ihren Tarif ab. Im Basic Tarif sind 60€ pro Jahr abgedeckt, in allen anderen Tarifen 100%.'},
+        {'role' : USER, 'content' : 'Kann ich bei nexible eine Hausatversicherung abschließen?' },
+        {'role' : ASSISTANT, 'content' : 'Nein, nexible bietet aber umfangreiche Produkte der Zahnzusatzversicherung und Reiseversicherung an.' },
+        {'role' : USER, 'content' : 'Wie kann ich einen Schaden melden?' },
+        {'role' : ASSISTANT, 'content' : 'Zu welchem Produkt möchten Sie einen Schaden melden?' },
+        {'role' : USER, 'content' : 'Zu meiner Reiserücktrittsversicherung' },
+        {'role' : ASSISTANT, 'content' : 'Ihren Schadenfalls können Sie ganz einfach online melden unter: https://www.nexible.de/schaden/reiseversicherung' },
+        {'role' : USER, 'content' : 'Wie kann ich meine Reiseversicherung abschließen oder berechnen?' },
+        {'role' : ASSISTANT, 'content' : 'Sie können Ihre Reiseversicherung ganz einfach online abschließen unter:  https://www.nexible.de/reiseversicherung/online-berechnen/anzahl_versicherter_personen' },
+        {'role' : USER, 'content' : 'Wie kann ich meine Kfz Schaden melden?' },
+        {'role' : ASSISTANT, 'content' : 'Ihren Schadenfalls können Sie ganz einfach online melden unter: https://www.nexible.de/schaden/autoversicherung/schadenmeldung' },
+        {'role' : USER, 'content' : 'Wie kann ich meine Schaden in der Reiseversicherung melden will?' },
+        {'role' : ASSISTANT, 'content' : 'Ihren Schadenfalls können Sie ganz einfach online melden unter: https://www.nexible.de/schaden/reiseversicherung' },
+        {'role' : USER, 'content' : 'Wie kann ich meine Leistungsfall in der Zahnversicherung geltend machen?' },
+        {'role' : ASSISTANT, 'content' : 'Ihren Leistungsfall können Sie ganz einfach online melden unter: https://www.nexible.de/kontakt' },
     ]
 
     def __init__(self, search_client: SearchClient, chatgpt_deployment: str, chatgpt_model: str, embedding_deployment: str, sourcepage_field: str, content_field: str):
@@ -100,7 +114,7 @@ Wenn Sie keine Suchabfrage generieren können, geben Sie nur die Zahl 0 zurück.
         if not has_text:
             query_text = None
 
-        # Use semantic L2 reranker if requested and if retrieval mode is text or hybrid (vectors + text)
+        # Use semantic L2 re-ranker if requested and if retrieval mode is text or hybrid (vectors + text)
         if overrides.get("semantic_ranker") and has_text:
             r = await self.search_client.search(query_text,
                                           filter=filter,
