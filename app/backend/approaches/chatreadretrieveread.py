@@ -175,7 +175,7 @@ Wenn Sie keine Suchabfrage generieren können, geben Sie nur die Zahl 0 zurück.
         return {"data_points": results, "answer": chat_content, "thoughts": f"Searched for:<br>{query_text}<br><br>Conversations:<br>" + msg_to_display.replace('\n', '<br>')}
 
     def get_messages_from_history(self, system_prompt: str, model_id: str, history: list[dict[str, str]], user_conv: str, few_shots = [], max_tokens: int = 4096) -> list:
-        message_builder = MessageBuilder(system_prompt, model_id)
+        message_builder = MessageBuilder(system_prompt, model_id, max_tokens=max_tokens)
 
         # Add examples to show the chat what responses we want. It will try to mimic any responses and make sure they match the rules laid out in the system message.
         for shot in few_shots:
