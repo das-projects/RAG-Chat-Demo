@@ -77,7 +77,7 @@ Wenn Sie keine Suchabfrage generieren können, geben Sie nur die Zahl 0 zurück.
         top = overrides.get("top") or 3
         exclude_category = overrides.get("exclude_category") or None
         filter = "category ne '{}'".format(exclude_category.replace("'", "''")) if exclude_category else None
-
+        
         user_q = 'Generate search query for: ' + history[-1]["user"]
 
         # STEP 1: Generate an optimized keyword search query based on the chat history and the last question
