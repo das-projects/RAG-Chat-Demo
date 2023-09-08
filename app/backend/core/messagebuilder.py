@@ -14,7 +14,7 @@ class MessageBuilder:
           append_message(self, role: str, content: str, index: int = 1): Appends a new message to the conversation.
       """
 
-    def __init__(self, system_content: str, chatgpt_model: str, max_tokens: int):
+    def __init__(self, system_content: str, chatgpt_model: str, max_tokens: int = 4096):
         self.messages = [{'role': 'system', 'content': system_content}]
         self.model = chatgpt_model
         self.token_length = num_tokens_from_messages(

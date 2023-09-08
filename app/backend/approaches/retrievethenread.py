@@ -87,7 +87,7 @@ info4.pdf: In-network institutions include Overlake, Swedish and others in the r
             results = [doc[self.sourcepage_field] + ": " + nonewlines(doc[self.content_field]) async for doc in r]
         content = "\n".join(results)
 
-        message_builder = MessageBuilder(overrides.get("prompt_template") or self.system_chat_template, self.chatgpt_model)
+        message_builder = MessageBuilder(overrides.get("prompt_template") or self.system_chat_template, self.chatgpt_model, max_tokens=1024)
 
         # add user question
         user_content = q + "\n" + f"Sources:\n {content}"
