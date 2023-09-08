@@ -38,4 +38,5 @@ export type ChatRequest = {
     history: ChatTurn[];
     approach: Approaches;
     overrides?: AskRequestOverrides;
+    shouldStream?: boolean;
 };

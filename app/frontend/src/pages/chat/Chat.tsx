@@ -1,10 +1,11 @@
 import { useRef, useState, useEffect } from "react";
-import { Checkbox, Panel, DefaultButton, TextField, SpinButton } from "@fluentui/react";
+import { Checkbox, Panel, DefaultButton, TextField, SpinButton, Dropdown, IDropdownOption } from "@fluentui/react";
 import { SparkleFilled } from "@fluentui/react-icons";
+import readNDJSONStream from "ndjson-readablestream";
 
 import styles from "./Chat.module.css";
 
-import { chatApi, Approaches, AskResponse, ChatRequest, ChatTurn } from "../../api";
+import { chatApi, RetrievalMode, Approaches, AskResponse, ChatRequest, ChatTurn } from "../../api";
 import { Answer, AnswerError, AnswerLoading } from "../../components/Answer";
 import { QuestionInput } from "../../components/QuestionInput";
 import { ExampleList } from "../../components/Example";
@@ -12,16 +13,17 @@ import { UserChatMessage } from "../../components/UserChatMessage";
 import { AnalysisPanel, AnalysisPanelTabs } from "../../components/AnalysisPanel";
 import { SettingsButton } from "../../components/SettingsButton";
 import { ClearChatButton } from "../../components/ClearChatButton";
-import nexible from "../../assets/nexible_logo.svg";
 
 const Chat = () => {
     const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
     const [promptTemplate, setPromptTemplate] = useState<string>("");
     const [retrieveCount, setRetrieveCount] = useState<number>(3);
+    const [retrievalMode, setRetrievalMode] = useState<RetrievalMode>(RetrievalMode.Hybrid);
     const [useSemanticRanker, setUseSemanticRanker] = useState<boolean>(true);
-    const [useSemanticCaptions, setUseSemanticCaptions] = useState<boolean>(true);
+    const [shouldStream, setShouldStream] = useState<boolean>(true);
+    const [useSemanticCaptions, setUseSemanticCaptions] = useState<boolean>(false);
     const [excludeCategory, setExcludeCategory] = useState<string>("");
-    const [useSuggestFollowupQuestions, setUseSuggestFollowupQuestions] = useState<boolean>(true);
+    const [useSuggestFollowupQuestions, setUseSuggestFollowupQuestions] = useState<boolean>(false);
 
     const lastQuestionRef = useRef<string>("");
     const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
@@ -48,17 +50,42 @@ const Chat = () => {
             const request: ChatRequest = {
                 history: [...history, { user: question, bot: undefined }],
                 approach: Approaches.ReadRetrieveRead,
+                shouldStream: shouldStream,
                 overrides: {
                     promptTemplate: promptTemplate.length === 0 ? undefined : promptTemplate,
                     excludeCategory: excludeCategory.length === 0 ? undefined : excludeCategory,
                     top: retrieveCount,
+                    retrievalMode: retrievalMode,
                     semanticRanker: useSemanticRanker,
                     semanticCaptions: useSemanticCaptions,
-                    suggestFollowupQuestions: useSuggestFollowupQuestions
+                    suggestFollowupQuestions: useSuggestFollowupQuestions,
                 }
             };
-            const result = await chatApi(request);
-            setAnswers([...answers, [question, result]]);
+
+            const response = await chatApi(request);
+            if (!response.body) {
+                throw Error("No response body");
+            }
+            if (shouldStream) {
+                let answer: string = '';
+                let askResponse: AskResponse = {} as AskResponse;
+                for await (const event of readNDJSONStream(response.body)) {
+                    if (event["data_points"]) {
+                        askResponse = event;
+                    } else if (event["choices"] && event["choices"][0]["delta"]["content"]) {
+                        answer += event["choices"][0]["delta"]["content"];
+                        let latestResponse: AskResponse = {...askResponse, answer: answer};
+                        setIsLoading(false);
+                        setAnswers([...answers, [question, latestResponse]]);
+                    }
+                }
+            } else {
+                const parsedResponse: AskResponse = await response.json();
+                if (response.status > 299 || !response.ok) {
+                    throw Error(parsedResponse.error || "Unknown error");
+                }
+                setAnswers([...answers, [question, parsedResponse]]);
+            }
         } catch (e) {
             setError(e);
         } finally {
@@ -84,12 +111,20 @@ const Chat = () => {
         setRetrieveCount(parseInt(newValue || "3"));
     };
 
+    const onRetrievalModeChange = (_ev: React.FormEvent<HTMLDivElement>, option?: IDropdownOption<RetrievalMode> | undefined, index?: number | undefined) => {
+        setRetrievalMode(option?.data || RetrievalMode.Hybrid);
+    };
+
     const onUseSemanticRankerChange = (_ev?: React.FormEvent<HTMLElement | HTMLInputElement>, checked?: boolean) => {
         setUseSemanticRanker(!!checked);
     };
 
     const onUseSemanticCaptionsChange = (_ev?: React.FormEvent<HTMLElement | HTMLInputElement>, checked?: boolean) => {
         setUseSemanticCaptions(!!checked);
+    };
+
+    const onShouldStreamChange = (_ev?: React.FormEvent<HTMLElement | HTMLInputElement>, checked?: boolean) => {
+        setShouldStream(!!checked);
     };
 
     const onExcludeCategoryChanged = (_ev?: React.FormEvent, newValue?: string) => {
@@ -135,17 +170,10 @@ const Chat = () => {
                 <div className={styles.chatContainer}>
                     {!lastQuestionRef.current ? (
                         <div className={styles.chatEmptyState}>
-                            {/* <SparkleFilled fontSize={"120px"} primaryFill={"rgba(115, 118, 225, 1)"} aria-hidden="true" aria-label="Chat logo" /> */}
-                            <img
-                                src={nexible}
-                                alt="Nexible Logo"
-                                width="300px"
-                                height="127px"
-                                className={styles.githubLogo}
-                            />
-                            {/*<h1 className={styles.chatEmptyStateTitle}>Digitale Assitant von Nexible</h1>*/}
-                            {/*<h2 className={styles.chatEmptyStateSubtitle}>Ask anything or try an example</h2>*/}
-                            {/*<ExampleList onExampleClicked={onExampleClicked} />*/}
+                            <SparkleFilled fontSize={"120px"} primaryFill={"rgba(115, 118, 225, 1)"} aria-hidden="true" aria-label="Chat logo" />
+                            <h1 className={styles.chatEmptyStateTitle}>Chat with your data</h1>
+                            <h2 className={styles.chatEmptyStateSubtitle}>Ask anything or try an example</h2>
+                            <ExampleList onExampleClicked={onExampleClicked} />
                         </div>
                     ) : (
                         <div className={styles.chatMessageStream}>
@@ -189,7 +217,7 @@ const Chat = () => {
                     <div className={styles.chatInput}>
                         <QuestionInput
                             clearOnSend
-                            placeholder="Hallo, ich bin der digitale Assistant von Nexible. Wie kann ich Ihnen beheilflich sein?"
+                            placeholder="Type a new question (e.g. does my plan cover annual eye exams?)"
                             disabled={isLoading}
                             onSend={question => makeApiRequest(question)}
                         />
@@ -208,18 +236,18 @@ const Chat = () => {
                 )}
 
                 <Panel
-                    headerText="Einstellungen"
+                    headerText="Configure answer generation"
                     isOpen={isConfigPanelOpen}
                     isBlocking={false}
                     onDismiss={() => setIsConfigPanelOpen(false)}
-                    closeButtonAriaLabel="Schließen"
+                    closeButtonAriaLabel="Close"
                     onRenderFooterContent={() => <DefaultButton onClick={() => setIsConfigPanelOpen(false)}>Close</DefaultButton>}
                     isFooterAtBottom={true}
                 >
                     <TextField
                         className={styles.chatSettingsSeparator}
                         defaultValue={promptTemplate}
-                        label="Template überschreiben"
+                        label="Override prompt template"
                         multiline
                         autoAdjustHeight
                         onChange={onPromptTemplateChange}
@@ -227,31 +255,48 @@ const Chat = () => {
 
                     <SpinButton
                         className={styles.chatSettingsSeparator}
-                        label="Anzahl Dokumente"
+                        label="Retrieve this many documents from search:"
                         min={1}
                         max={50}
                         defaultValue={retrieveCount.toString()}
                         onChange={onRetrieveCountChange}
                     />
-                    <TextField className={styles.chatSettingsSeparator} label="Ausschluss" onChange={onExcludeCategoryChanged} />
+                    <TextField className={styles.chatSettingsSeparator} label="Exclude category" onChange={onExcludeCategoryChanged} />
                     <Checkbox
                         className={styles.chatSettingsSeparator}
                         checked={useSemanticRanker}
-                        label="Semantisches Ranking"
+                        label="Use semantic ranker for retrieval"
                         onChange={onUseSemanticRankerChange}
                     />
                     <Checkbox
                         className={styles.chatSettingsSeparator}
                         checked={useSemanticCaptions}
-                        label="Kontextbezogene Zusammenfassungen anstatt ganze Dokumente"
+                        label="Use query-contextual summaries instead of whole documents"
                         onChange={onUseSemanticCaptionsChange}
                         disabled={!useSemanticRanker}
                     />
                     <Checkbox
                         className={styles.chatSettingsSeparator}
                         checked={useSuggestFollowupQuestions}
-                        label="Passende Fragen vorschlagen lassen"
+                        label="Suggest follow-up questions"
                         onChange={onUseSuggestFollowupQuestionsChange}
+                    />
+                    <Dropdown
+                        className={styles.chatSettingsSeparator}
+                        label="Retrieval mode"
+                        options={[
+                            { key: "hybrid", text: "Vectors + Text (Hybrid)", selected: retrievalMode == RetrievalMode.Hybrid, data: RetrievalMode.Hybrid },
+                            { key: "vectors", text: "Vectors", selected: retrievalMode == RetrievalMode.Vectors, data: RetrievalMode.Vectors },
+                            { key: "text", text: "Text", selected: retrievalMode == RetrievalMode.Text, data: RetrievalMode.Text }
+                        ]}
+                        required
+                        onChange={onRetrievalModeChange}
+                    />
+                    <Checkbox
+                        className={styles.chatSettingsSeparator}
+                        checked={shouldStream}
+                        label="Stream chat completion responses"
+                        onChange={onShouldStreamChange}
                     />
                 </Panel>
             </div>
