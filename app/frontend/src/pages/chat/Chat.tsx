@@ -244,7 +244,7 @@ const Chat = () => {
                         activeTab={activeAnalysisPanelTab}
                     />
                 )}
-
+                {/*
                 <Panel
                     headerText="Einstellungen"
                     isOpen={isConfigPanelOpen}
@@ -308,7 +308,7 @@ const Chat = () => {
                         label="Antworten auf den Abschluss des Chats streamen"
                         onChange={onShouldStreamChange}
                     />
-                </Panel>
+                </Panel> */}
             </div>
         </div>
     );
