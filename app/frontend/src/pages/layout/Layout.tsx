@@ -12,7 +12,9 @@ const Layout = () => {
                     <Link to="/" className={styles.headerTitleContainer}>
                         <h3 className={styles.headerTitle}>Nexible Chatbot</h3>
                     </Link>
+                    {/*
                     <nav>
+
                          <ul className={styles.headerNavList}>
                             <li>
                                 <NavLink to="/" className={({ isActive }) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}>
@@ -25,7 +27,7 @@ const Layout = () => {
                                 </NavLink>
                             </li>
 
-                            {/* <li className={styles.headerNavLeftMargin}>
+                             <li className={styles.headerNavLeftMargin}>
                                 <a href="https://aka.ms/entgptsearch" target={"_blank"} title="Github repository link">
                                     <img
                                         src={github}
@@ -37,9 +39,10 @@ const Layout = () => {
                                     />
                                 </a>
                             </li>
-                            */}
+
                         </ul>
                     </nav>
+                    */}
                     {/* <h4 className={styles.headerRightText}>Azure OpenAI + Cognitive Search</h4> */}
                 </div>
             </header>
