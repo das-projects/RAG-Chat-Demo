@@ -227,7 +227,7 @@ const Chat = () => {
                     <div className={styles.chatInput}>
                         <QuestionInput
                             clearOnSend
-                            placeholder="Type a new question (e.g. does my plan cover annual eye exams?)"
+                            placeholder="Geben Sie hier Ihre Frage zu einem Nexible Produkt ein..."
                             disabled={isLoading}
                             onSend={question => makeApiRequest(question)}
                         />
@@ -246,7 +246,7 @@ const Chat = () => {
                 )}
 
                 <Panel
-                    headerText="Configure answer generation"
+                    headerText="Einstellungen"
                     isOpen={isConfigPanelOpen}
                     isBlocking={false}
                     onDismiss={() => setIsConfigPanelOpen(false)}
@@ -257,7 +257,7 @@ const Chat = () => {
                     <TextField
                         className={styles.chatSettingsSeparator}
                         defaultValue={promptTemplate}
-                        label="Override prompt template"
+                        label="Template überschreiben"
                         multiline
                         autoAdjustHeight
                         onChange={onPromptTemplateChange}
@@ -265,30 +265,30 @@ const Chat = () => {
 
                     <SpinButton
                         className={styles.chatSettingsSeparator}
-                        label="Retrieve this many documents from search:"
+                        label="Anzahl Dokumente:"
                         min={1}
                         max={50}
                         defaultValue={retrieveCount.toString()}
                         onChange={onRetrieveCountChange}
                     />
-                    <TextField className={styles.chatSettingsSeparator} label="Exclude category" onChange={onExcludeCategoryChanged} />
+                    <TextField className={styles.chatSettingsSeparator} label="Ausschluss" onChange={onExcludeCategoryChanged} />
                     <Checkbox
                         className={styles.chatSettingsSeparator}
                         checked={useSemanticRanker}
-                        label="Use semantic ranker for retrieval"
+                        label="Semantisches Ranking"
                         onChange={onUseSemanticRankerChange}
                     />
                     <Checkbox
                         className={styles.chatSettingsSeparator}
                         checked={useSemanticCaptions}
-                        label="Use query-contextual summaries instead of whole documents"
+                        label="Kontextbezogene Zusammenfassungen anstatt ganze Dokumente"
                         onChange={onUseSemanticCaptionsChange}
                         disabled={!useSemanticRanker}
                     />
                     <Checkbox
                         className={styles.chatSettingsSeparator}
                         checked={useSuggestFollowupQuestions}
-                        label="Suggest follow-up questions"
+                        label="Passende Fragen vorschlagen lassen"
                         onChange={onUseSuggestFollowupQuestionsChange}
                     />
                     <Dropdown
@@ -305,7 +305,7 @@ const Chat = () => {
                     <Checkbox
                         className={styles.chatSettingsSeparator}
                         checked={shouldStream}
-                        label="Stream chat completion responses"
+                        label="Antworten auf den Abschluss des Chats streamen"
                         onChange={onShouldStreamChange}
                     />
                 </Panel>
