@@ -112,38 +112,38 @@ async def format_as_ndjson(r: AsyncGenerator[dict, None]) -> AsyncGenerator[str,
     async for event in r:
         yield json.dumps(event, ensure_ascii=False) + "\n"
 
-async def append_chat_history(user_ip, request_json: dict, response) -> None:
-    chat_history_container_client = current_app.config[CONFIG_CHAT_HISTORY_CONTAINER_CLIENT]
-    chat_blob_name = f"chat_history_{user_ip}.json"
-    blob = chat_history_container_client.get_blob_client(chat_blob_name)
-
-    try:
-        # Assuming response_generator is a list of responses, we'll store them all.
-        # Depending on the actual structure, you may need to adjust.
-        chat_data = {
-            "history": request_json["history"],
-            "response": json.loads(response.body),
-            "timestamp": time.time()
-        }
-
-        # Fetch the existing blob content if it exists.
-        existing_content = []
-        try:
-            stream = await blob.download_blob()
-            existing_content = json.loads(await stream.readall())
-        except Exception as e:
-            logging.info(f"No existing chat stream found for user {user_ip}. A new one will be created.")
-
-        # Append the new chat stream to the existing content.
-        existing_content.append(chat_data)
-
-        # Serialize the updated content.
-        chat_data_serialized = json.dumps(existing_content, ensure_ascii=False, indent=2)
-
-        # Save it back to the blob.
-        await blob.upload_blob(chat_data_serialized, overwrite=True)
-    except Exception as e:
-        logging.exception("Failed to append chat stream history")
+# async def append_chat_history(user_ip, request_json: dict, response) -> None:
+#     chat_history_container_client = current_app.config[CONFIG_CHAT_HISTORY_CONTAINER_CLIENT]
+#     chat_blob_name = f"chat_history_{user_ip}.json"
+#     blob = chat_history_container_client.get_blob_client(chat_blob_name)
+#
+#     try:
+#         # Assuming response_generator is a list of responses, we'll store them all.
+#         # Depending on the actual structure, you may need to adjust.
+#         chat_data = {
+#             "history": request_json["history"],
+#             "response": json.loads(response.body),
+#             "timestamp": time.time()
+#         }
+#
+#         # Fetch the existing blob content if it exists.
+#         existing_content = []
+#         try:
+#             stream = await blob.download_blob()
+#             existing_content = json.loads(await stream.readall())
+#         except Exception as e:
+#             logging.info(f"No existing chat stream found for user {user_ip}. A new one will be created.")
+#
+#         # Append the new chat stream to the existing content.
+#         existing_content.append(chat_data)
+#
+#         # Serialize the updated content.
+#         chat_data_serialized = json.dumps(existing_content, ensure_ascii=False, indent=2)
+#
+#         # Save it back to the blob.
+#         await blob.upload_blob(chat_data_serialized, overwrite=True)
+#     except Exception as e:
+#         logging.exception("Failed to append chat stream history")
 
 
 @bp.route("/chat_stream", methods=["POST"])
@@ -168,23 +168,23 @@ async def chat_stream():
         return jsonify({"error": str(e)}), 500
 
 
-@bp.route("/chat_history", methods=["GET"])
-async def get_chat_history():
-    try:
-        chat_history_container_client = current_app.config[CONFIG_CHAT_HISTORY_CONTAINER_CLIENT]
-        blobs = chat_history_container_client.list_blobs()
-        chat_history = []
-
-        async for blob in blobs:
-            blob_data = await blob.download_blob()
-            chat_entry = json.loads(await blob_data.readall())
-            chat_history.append(chat_entry)
-
-        return jsonify(chat_history), 200
-
-    except Exception as e:
-        logging.exception("Failed to retrieve chat history")
-        return jsonify({"error": "Failed to retrieve chat history"}), 500
+# @bp.route("/chat_history", methods=["GET"])
+# async def get_chat_history():
+#     try:
+#         chat_history_container_client = current_app.config[CONFIG_CHAT_HISTORY_CONTAINER_CLIENT]
+#         blobs = chat_history_container_client.list_blobs()
+#         chat_history = []
+#
+#         async for blob in blobs:
+#             blob_data = await blob.download_blob()
+#             chat_entry = json.loads(await blob_data.readall())
+#             chat_history.append(chat_entry)
+#
+#         return jsonify(chat_history), 200
+#
+#     except Exception as e:
+#         logging.exception("Failed to retrieve chat history")
+#         return jsonify({"error": "Failed to retrieve chat history"}), 500
 
 
 @bp.before_request
@@ -229,8 +229,8 @@ async def setup_clients():
     blob_container_client = blob_client.get_container_client(AZURE_STORAGE_CONTAINER)
 
     # Create a container to store chat history
-    chat_history_container = f"chat-history-{int(time.time())}"
-    chat_history_container_client = blob_client.create_container(chat_history_container)
+    chat_history_container = "chat-history"
+    chat_history_container_client = blob_client.get_container_client(chat_history_container)
 
     # Used by the OpenAI SDK
     openai.api_base = f"https://{AZURE_OPENAI_SERVICE}.openai.azure.com"
