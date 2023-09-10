@@ -112,11 +112,47 @@ async def format_as_ndjson(r: AsyncGenerator[dict, None]) -> AsyncGenerator[str,
     async for event in r:
         yield json.dumps(event, ensure_ascii=False) + "\n"
 
+async def append_chat_history(user_ip, request_json: dict, response) -> None:
+    # Get user's IP as a simple UID. Note the caution about using IPs.
+    chat_history_container_client = current_app.config[CONFIG_CHAT_HISTORY_CONTAINER_CLIENT]
+    chat_blob_name = f"chatstream-{user_ip}.json"
+    blob = chat_history_container_client.get_blob_client(chat_blob_name)
+
+    try:
+        # Assuming response_generator is a list of responses, we'll store them all.
+        # Depending on the actual structure, you may need to adjust.
+        chat_data = {
+            "history": request_json["history"],
+            "response": json.loads(response.body),
+            "timestamp": time.time()
+        }
+
+        # Fetch the existing blob content if it exists.
+        existing_content = []
+        try:
+            stream = await blob.download_blob()
+            existing_content = json.loads(await stream.readall())
+        except Exception as e:
+            logging.info(f"No existing chat stream found for user {user_ip}. A new one will be created.")
+
+        # Append the new chat stream to the existing content.
+        existing_content.append(chat_data)
+
+        # Serialize the updated content.
+        chat_data_serialized = json.dumps(existing_content)
+
+        # Save it back to the blob.
+        await blob.upload_blob(chat_data_serialized, overwrite=True)
+    except Exception as e:
+        logging.exception("Failed to append chat stream history")
+
+
 @bp.route("/chat_stream", methods=["POST"])
 async def chat_stream():
     if not request.is_json:
         return jsonify({"error": "request must be json"}), 415
     request_json = await request.get_json()
+    user_ip = request.remote_addr
     approach = request_json["approach"]
     try:
         impl = current_app.config[CONFIG_CHAT_APPROACHES].get(approach)
@@ -125,6 +161,7 @@ async def chat_stream():
         response_generator = impl.run_with_streaming(request_json["history"], request_json.get("overrides", {}))
         response = await make_response(format_as_ndjson(response_generator))
         response.timeout = None # type: ignore
+        await append_chat_history(user_ip, request_json, response)
         return response
     except Exception as e:
         logging.exception("Exception in /chat")
