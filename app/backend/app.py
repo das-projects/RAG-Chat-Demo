@@ -36,6 +36,7 @@ CONFIG_CREDENTIAL = "azure_credential"
 CONFIG_ASK_APPROACHES = "ask_approaches"
 CONFIG_CHAT_APPROACHES = "chat_approaches"
 CONFIG_BLOB_CONTAINER_CLIENT = "blob_container_client"
+CONFIG_CHAT_HISTORY_CONTAINER_CLIENT = "chat_history_container_client"
 
 bp = Blueprint("routes", __name__, static_folder='static')
 
@@ -130,6 +131,25 @@ async def chat_stream():
         return jsonify({"error": str(e)}), 500
 
 
+@bp.route("/chat_history", methods=["GET"])
+async def get_chat_history():
+    try:
+        chat_history_container_client = current_app.config[CONFIG_CHAT_HISTORY_CONTAINER_CLIENT]
+        blobs = chat_history_container_client.list_blobs()
+        chat_history = []
+
+        async for blob in blobs:
+            blob_data = await blob.download_blob()
+            chat_entry = json.loads(await blob_data.readall())
+            chat_history.append(chat_entry)
+
+        return jsonify(chat_history), 200
+
+    except Exception as e:
+        logging.exception("Failed to retrieve chat history")
+        return jsonify({"error": "Failed to retrieve chat history"}), 500
+
+
 @bp.before_request
 async def ensure_openai_token():
     openai_token = current_app.config[CONFIG_OPENAI_TOKEN]
@@ -137,6 +157,7 @@ async def ensure_openai_token():
         openai_token = await current_app.config[CONFIG_CREDENTIAL].get_token("https://cognitiveservices.azure.com/.default")
         current_app.config[CONFIG_OPENAI_TOKEN] = openai_token
         openai.api_key = openai_token.token
+
 
 @bp.before_app_serving
 async def setup_clients():
@@ -170,6 +191,10 @@ async def setup_clients():
         credential=azure_credential)
     blob_container_client = blob_client.get_container_client(AZURE_STORAGE_CONTAINER)
 
+    # Create a container to store chat history
+    chat_history_container = f"chat-history-{int(time.time())}"
+    chat_history_container_client = blob_client.create_container(chat_history_container)
+
     # Used by the OpenAI SDK
     openai.api_base = f"https://{AZURE_OPENAI_SERVICE}.openai.azure.com"
     openai.api_version = "2023-05-15"
@@ -183,6 +208,7 @@ async def setup_clients():
     current_app.config[CONFIG_OPENAI_TOKEN] = openai_token
     current_app.config[CONFIG_CREDENTIAL] = azure_credential
     current_app.config[CONFIG_BLOB_CONTAINER_CLIENT] = blob_container_client
+    current_app.config[CONFIG_CHAT_HISTORY_CONTAINER_CLIENT] = chat_history_container_client
 
     # Various approaches to integrate GPT and external knowledge, most applications will use a single one of these patterns
     # or some derivative, here we include several for exploration purposes
