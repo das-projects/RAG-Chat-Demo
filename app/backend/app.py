@@ -113,7 +113,6 @@ async def format_as_ndjson(r: AsyncGenerator[dict, None]) -> AsyncGenerator[str,
         yield json.dumps(event, ensure_ascii=False) + "\n"
 
 async def append_chat_history(user_ip, request_json: dict, response) -> None:
-    # Get user's IP as a simple UID. Note the caution about using IPs.
     chat_history_container_client = current_app.config[CONFIG_CHAT_HISTORY_CONTAINER_CLIENT]
     chat_blob_name = f"chatstream-{user_ip}.json"
     blob = chat_history_container_client.get_blob_client(chat_blob_name)
@@ -139,7 +138,7 @@ async def append_chat_history(user_ip, request_json: dict, response) -> None:
         existing_content.append(chat_data)
 
         # Serialize the updated content.
-        chat_data_serialized = json.dumps(existing_content)
+        chat_data_serialized = json.dumps(existing_content, ensure_ascii=False, indent=2)
 
         # Save it back to the blob.
         await blob.upload_blob(chat_data_serialized, overwrite=True)
@@ -152,6 +151,7 @@ async def chat_stream():
     if not request.is_json:
         return jsonify({"error": "request must be json"}), 415
     request_json = await request.get_json()
+    # Get user's IP as a simple UID.
     user_ip = request.remote_addr
     approach = request_json["approach"]
     try:
