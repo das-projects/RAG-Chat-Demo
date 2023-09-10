@@ -114,7 +114,7 @@ async def format_as_ndjson(r: AsyncGenerator[dict, None]) -> AsyncGenerator[str,
 
 async def append_chat_history(user_ip, request_json: dict, response) -> None:
     chat_history_container_client = current_app.config[CONFIG_CHAT_HISTORY_CONTAINER_CLIENT]
-    chat_blob_name = f"chatstream-{user_ip}.json"
+    chat_blob_name = f"chat_history_{user_ip}.json"
     blob = chat_history_container_client.get_blob_client(chat_blob_name)
 
     try:
