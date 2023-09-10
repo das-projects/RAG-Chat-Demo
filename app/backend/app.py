@@ -152,7 +152,7 @@ async def chat_stream():
         return jsonify({"error": "request must be json"}), 415
     request_json = await request.get_json()
     # Get user's IP as a simple UID.
-    user_ip = request.remote_addr
+    # user_ip = request.remote_addr
     approach = request_json["approach"]
     try:
         impl = current_app.config[CONFIG_CHAT_APPROACHES].get(approach)
@@ -161,7 +161,7 @@ async def chat_stream():
         response_generator = impl.run_with_streaming(request_json["history"], request_json.get("overrides", {}))
         response = await make_response(format_as_ndjson(response_generator))
         response.timeout = None # type: ignore
-        await append_chat_history(user_ip, request_json, response)
+        # await append_chat_history(user_ip, request_json, response)
         return response
     except Exception as e:
         logging.exception("Exception in /chat")
