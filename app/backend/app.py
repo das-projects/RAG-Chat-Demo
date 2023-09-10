@@ -122,9 +122,10 @@ async def append_chat_history(user_ip, request_json: dict, response: Response) -
     try:
         # Assuming response_generator is a list of responses, we'll store them all.
         # Depending on the actual structure, you may need to adjust.
+        response_data = json.loads(await response.get_data())
         chat_data = {
             "history": request_json["history"],
-            "response": json.loads(response.response[0].decode("utf-8")),
+            "response": response_data,
             "timestamp": time.time()
         }
 
@@ -156,7 +157,7 @@ async def chat_stream():
         return jsonify({"error": "request must be json"}), 415
     request_json = await request.get_json()
     # Get user's IP as a simple UID.
-    user_ip = socket.gethostbyname(socket.gethostname())
+    user_ip = request.remote_addr
     approach = request_json["approach"]
     try:
         impl = current_app.config[CONFIG_CHAT_APPROACHES].get(approach)
