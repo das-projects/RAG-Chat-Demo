@@ -4,8 +4,8 @@ import logging
 import mimetypes
 import os
 import time
+from datetime import datetime
 from typing import AsyncGenerator
-import socket
 
 import aiohttp
 import openai
@@ -114,10 +114,9 @@ async def format_as_ndjson(r: AsyncGenerator[dict, None]) -> AsyncGenerator[str,
     async for event in r:
         yield json.dumps(event, ensure_ascii=False) + "\n"
 
-async def append_chat_history(user_ip, request_json: dict, response: Response) -> bool:
+async def append_chat_history(user_id: str, request_json: dict, response: Response) -> bool:
     chat_history_container_client = current_app.config[CONFIG_CHAT_HISTORY_CONTAINER_CLIENT]
-    chat_blob_name = f"chat_history_{user_ip}.json"
-    blob = chat_history_container_client.get_blob_client(chat_blob_name)
+    chat_blob_name = f"chat_history_{user_id}_{datetime.today().strftime('%Y-%m-%d')}.json"
 
     try:
         # Assuming response_generator is a list of responses, we'll store them all.
@@ -132,10 +131,10 @@ async def append_chat_history(user_ip, request_json: dict, response: Response) -
         # Fetch the existing blob content if it exists.
         existing_content = []
         try:
-            stream = await blob.download_blob()
+            stream = await chat_history_container_client.download_blob(chat_blob_name)
             existing_content = json.loads(await stream.readall())
         except Exception as e:
-            logging.info(f"No existing chat stream found for user {user_ip}. A new one will be created.")
+            logging.info(f"No existing chat stream found for user {user_id}. A new one will be created.")
 
         # Append the new chat stream to the existing content.
         existing_content.append(chat_data)
@@ -144,7 +143,7 @@ async def append_chat_history(user_ip, request_json: dict, response: Response) -
         chat_data_serialized = json.dumps(existing_content, ensure_ascii=False, indent=2)
 
         # Save it back to the blob.
-        await blob.upload_blob(chat_data_serialized, overwrite=True)
+        await chat_history_container_client.upload_blob(chat_blob_name, chat_data_serialized, overwrite=True)
         return True
     except Exception as e:
         logging.exception("Failed to append chat stream history")
@@ -157,7 +156,9 @@ async def chat_stream():
         return jsonify({"error": "request must be json"}), 415
     request_json = await request.get_json()
     # Get user's IP as a simple UID.
-    user_ip = request.remote_addr
+    user_id = str(request.remote_addr)
+    if user_id is None:
+        user_id = str(time.time())
     approach = request_json["approach"]
     try:
         impl = current_app.config[CONFIG_CHAT_APPROACHES].get(approach)
@@ -166,7 +167,7 @@ async def chat_stream():
         response_generator = impl.run_with_streaming(request_json["history"], request_json.get("overrides", {}))
         response = await make_response(format_as_ndjson(response_generator))
         response.timeout = None # type: ignore
-        success = await append_chat_history(user_ip, request_json, response)
+        success = await append_chat_history(user_id, request_json, response)
         return response
     except Exception as e:
         logging.exception("Exception in /chat")
@@ -236,6 +237,8 @@ async def setup_clients():
     # Get the container to store chat history
     chat_history_container = "chat-history"
     chat_history_container_client = blob_client.get_container_client(chat_history_container)
+    if not chat_history_container_client.exists():
+        chat_history_container_client.create_container()
 
     # Used by the OpenAI SDK
     openai.api_base = f"https://{AZURE_OPENAI_SERVICE}.openai.azure.com"
