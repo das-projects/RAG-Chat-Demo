@@ -4,6 +4,7 @@ import logging
 import mimetypes
 import os
 import time
+import uuid
 from datetime import datetime
 from typing import AsyncGenerator
 
@@ -114,24 +115,24 @@ async def format_as_ndjson(r: AsyncGenerator[dict, None]) -> AsyncGenerator[str,
     async for event in r:
         yield json.dumps(event, ensure_ascii=False) + "\n"
 
-async def append_chat_history(user_id: str, request_json: dict, response: Response) -> bool:
+async def append_chat_history(user_id: str, request_json: dict) -> bool:
     chat_history_container_client = current_app.config[CONFIG_CHAT_HISTORY_CONTAINER_CLIENT]
     chat_blob_name = f"chat_history_{user_id}_{datetime.today().strftime('%Y-%m-%d')}.json"
+    chat_blob_client = chat_history_container_client.get_blob_client(chat_blob_name)
 
     try:
-        # Assuming response_generator is a list of responses, we'll store them all.
-        # Depending on the actual structure, you may need to adjust.
-        response_data = json.loads(await response.get_data())
+        # Assuming response is an async_generator responses, we'll store them all.
+        # response_data = json.loads(await response.get_data())
         chat_data = {
             "history": request_json["history"],
-            "response": response_data,
+            # "response": response_data,
             "timestamp": time.time()
         }
 
         # Fetch the existing blob content if it exists.
         existing_content = []
         try:
-            stream = await chat_history_container_client.download_blob(chat_blob_name)
+            stream = await chat_blob_client.download_blob()
             existing_content = json.loads(await stream.readall())
         except Exception as e:
             logging.info(f"No existing chat stream found for user {user_id}. A new one will be created.")
@@ -143,7 +144,7 @@ async def append_chat_history(user_id: str, request_json: dict, response: Respon
         chat_data_serialized = json.dumps(existing_content, ensure_ascii=False, indent=2)
 
         # Save it back to the blob.
-        await chat_history_container_client.upload_blob(chat_blob_name, chat_data_serialized, overwrite=True)
+        await chat_blob_client.upload_blob(chat_data_serialized, overwrite=True)
         return True
     except Exception as e:
         logging.exception("Failed to append chat stream history")
@@ -155,11 +156,12 @@ async def chat_stream():
     if not request.is_json:
         return jsonify({"error": "request must be json"}), 415
     request_json = await request.get_json()
-    # Get user's IP as a simple UID.
+    # Get user's IP as a simple UID or generate a random one.
     user_id = str(request.remote_addr)
     if user_id is None:
-        user_id = str(time.time())
+        user_id = str(uuid.uuid4())
     approach = request_json["approach"]
+    success = await append_chat_history(user_id, request_json)
     try:
         impl = current_app.config[CONFIG_CHAT_APPROACHES].get(approach)
         if not impl:
@@ -167,7 +169,7 @@ async def chat_stream():
         response_generator = impl.run_with_streaming(request_json["history"], request_json.get("overrides", {}))
         response = await make_response(format_as_ndjson(response_generator))
         response.timeout = None # type: ignore
-        success = await append_chat_history(user_id, request_json, response)
+        # success = await append_chat_history(user_id, request_json, response)
         return response
     except Exception as e:
         logging.exception("Exception in /chat")
