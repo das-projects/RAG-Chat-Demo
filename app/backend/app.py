@@ -118,7 +118,7 @@ async def format_as_ndjson(r: AsyncGenerator[dict, None]) -> AsyncGenerator[str,
 async def append_chat_history(user_id: str, request_json: dict) -> bool:
     chat_history_container_client = current_app.config[CONFIG_CHAT_HISTORY_CONTAINER_CLIENT]
     chat_blob_name = f"chat_history_{user_id}_{datetime.today().strftime('%Y-%m-%d')}.json"
-    chat_blob_client = chat_history_container_client.get_blob_client(chat_blob_name)
+    # chat_blob_client = chat_history_container_client.get_blob_client(chat_blob_name)
 
     try:
         # Assuming response is an async_generator responses, we'll store them all.
@@ -132,7 +132,7 @@ async def append_chat_history(user_id: str, request_json: dict) -> bool:
         # Fetch the existing blob content if it exists.
         existing_content = []
         try:
-            stream = await chat_blob_client.download_blob()
+            stream = await chat_history_container_client.download_blob(chat_blob_name)
             existing_content = json.loads(await stream.readall())
         except Exception as e:
             logging.info(f"No existing chat stream found for user {user_id}. A new one will be created.")
@@ -144,7 +144,7 @@ async def append_chat_history(user_id: str, request_json: dict) -> bool:
         chat_data_serialized = json.dumps(existing_content, ensure_ascii=False, indent=2)
 
         # Save it back to the blob.
-        await chat_blob_client.upload_blob(chat_data_serialized, overwrite=True)
+        await chat_history_container_client.upload_blob(chat_blob_name, chat_data_serialized, overwrite=True)
         return True
     except Exception as e:
         logging.exception("Failed to append chat stream history")
