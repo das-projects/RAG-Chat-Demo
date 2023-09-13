@@ -161,7 +161,7 @@ async def chat_stream():
     if user_id is None:
         user_id = str(uuid.uuid4())
     approach = request_json["approach"]
-    success = await append_chat_history(user_id, request_json)
+    # success = await append_chat_history(user_id, request_json)
     try:
         impl = current_app.config[CONFIG_CHAT_APPROACHES].get(approach)
         if not impl:
