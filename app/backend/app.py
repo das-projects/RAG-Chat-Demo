@@ -237,7 +237,7 @@ async def setup_clients():
     blob_container_client = blob_client.get_container_client(AZURE_STORAGE_CONTAINER)
 
     # Get the container to store chat history
-    chat_history_container = "chat-history"
+    chat_history_container = "chathistory"
     chat_history_container_client = blob_client.get_container_client(chat_history_container)
     if not chat_history_container_client.exists():
         chat_history_container_client.create_container()
