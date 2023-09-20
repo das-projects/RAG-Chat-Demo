@@ -5,7 +5,7 @@
 This prototype demonstrates the Retrieval Augmented Generation (RAG) pattern. It uses Azure OpenAI Service to access the 
 ChatGPT model (gpt-35-turbo), the ada-002 text embedding model, and Azure Cognitive Search for data indexing and retrieval.
 
-![RAG Architecture](docs/high_level_data_flow.png)
+<!---![RAG Architecture](docs/high_level_data_flow.png)--->
 
 ## Features
 
