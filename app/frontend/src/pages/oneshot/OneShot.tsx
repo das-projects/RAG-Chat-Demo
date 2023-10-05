@@ -1,25 +1,31 @@
 import { useRef, useState } from "react";
-import { Checkbox, ChoiceGroup, IChoiceGroupOption, Panel, DefaultButton, Spinner, TextField, SpinButton } from "@fluentui/react";
+import { Checkbox, ChoiceGroup, IChoiceGroupOption, Panel, DefaultButton, Spinner, TextField, SpinButton, IDropdownOption, Dropdown } from "@fluentui/react";
 
 import styles from "./OneShot.module.css";
 
-import { askApi, Approaches, AskResponse, AskRequest } from "../../api";
+import { askApi, Approaches, AskResponse, AskRequest, RetrievalMode } from "../../api";
 import { Answer, AnswerError } from "../../components/Answer";
 import { QuestionInput } from "../../components/QuestionInput";
 import { ExampleList } from "../../components/Example";
 import { AnalysisPanel, AnalysisPanelTabs } from "../../components/AnalysisPanel";
 import { SettingsButton } from "../../components/SettingsButton/SettingsButton";
+import { useLogin, getToken } from "../../authConfig";
+import { useMsal } from "@azure/msal-react";
+import { TokenClaimsDisplay } from "../../components/TokenClaimsDisplay";
 
-const OneShot = () => {
+export function Component(): JSX.Element {
     const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
-    const [approach, setApproach] = useState<Approaches>(Approaches.ReadDecomposeAsk);
+    const [approach, setApproach] = useState<Approaches>(Approaches.RetrieveThenRead);
     const [promptTemplate, setPromptTemplate] = useState<string>("");
     const [promptTemplatePrefix, setPromptTemplatePrefix] = useState<string>("");
     const [promptTemplateSuffix, setPromptTemplateSuffix] = useState<string>("");
+    const [retrievalMode, setRetrievalMode] = useState<RetrievalMode>(RetrievalMode.Hybrid);
     const [retrieveCount, setRetrieveCount] = useState<number>(3);
     const [useSemanticRanker, setUseSemanticRanker] = useState<boolean>(true);
     const [useSemanticCaptions, setUseSemanticCaptions] = useState<boolean>(false);
     const [excludeCategory, setExcludeCategory] = useState<string>("");
+    const [useOidSecurityFilter, setUseOidSecurityFilter] = useState<boolean>(false);
+    const [useGroupsSecurityFilter, setUseGroupsSecurityFilter] = useState<boolean>(false);
 
     const lastQuestionRef = useRef<string>("");
 
@@ -30,6 +36,8 @@ const OneShot = () => {
     const [activeCitation, setActiveCitation] = useState<string>();
     const [activeAnalysisPanelTab, setActiveAnalysisPanelTab] = useState<AnalysisPanelTabs | undefined>(undefined);
 
+    const client = useLogin ? useMsal().instance : undefined
+
     const makeApiRequest = async (question: string) => {
         lastQuestionRef.current = question;
 
@@ -37,6 +45,8 @@ const OneShot = () => {
         setIsLoading(true);
         setActiveCitation(undefined);
         setActiveAnalysisPanelTab(undefined);
+
+        const token = client ? await getToken(client) : undefined
 
         try {
             const request: AskRequest = {
@@ -48,9 +58,13 @@ const OneShot = () => {
                     promptTemplateSuffix: promptTemplateSuffix.length === 0 ? undefined : promptTemplateSuffix,
                     excludeCategory: excludeCategory.length === 0 ? undefined : excludeCategory,
                     top: retrieveCount,
+                    retrievalMode: retrievalMode,
                     semanticRanker: useSemanticRanker,
-                    semanticCaptions: useSemanticCaptions
-                }
+                    semanticCaptions: useSemanticCaptions,
+                    useOidSecurityFilter: useOidSecurityFilter,
+                    useGroupsSecurityFilter: useGroupsSecurityFilter
+                },
+                idToken: token?.accessToken
             };
             const result = await askApi(request);
             setAnswer(result);
@@ -75,6 +89,10 @@ const OneShot = () => {
 
     const onRetrieveCountChange = (_ev?: React.SyntheticEvent<HTMLElement, Event>, newValue?: string) => {
         setRetrieveCount(parseInt(newValue || "3"));
+    };
+
+    const onRetrievalModeChange = (_ev: React.FormEvent<HTMLDivElement>, option?: IDropdownOption<RetrievalMode> | undefined, index?: number | undefined) => {
+        setRetrievalMode(option?.data || RetrievalMode.Hybrid);
     };
 
     const onApproachChange = (_ev?: React.FormEvent<HTMLElement | HTMLInputElement>, option?: IChoiceGroupOption) => {
@@ -114,6 +132,14 @@ const OneShot = () => {
         }
     };
 
+    const onUseOidSecurityFilterChange = (_ev?: React.FormEvent<HTMLElement | HTMLInputElement>, checked?: boolean) => {
+        setUseOidSecurityFilter(!!checked);
+    };
+
+    const onUseGroupsSecurityFilterChange = (_ev?: React.FormEvent<HTMLElement | HTMLInputElement>, checked?: boolean) => {
+        setUseGroupsSecurityFilter(!!checked);
+    };
+
     const approaches: IChoiceGroupOption[] = [
         {
             key: Approaches.RetrieveThenRead,
@@ -144,11 +170,12 @@ const OneShot = () => {
             </div>
             <div className={styles.oneshotBottomSection}>
                 {isLoading && <Spinner label="Antwort generieren" />}
-                {!lastQuestionRef.current } {/* && <ExampleList onExampleClicked={onExampleClicked} />*/}
+                {!lastQuestionRef.current && <ExampleList onExampleClicked={onExampleClicked} />}
                 {!isLoading && answer && !error && (
                     <div className={styles.oneshotAnswerContainer}>
                         <Answer
                             answer={answer}
+                            isStreaming={false}
                             onCitationClicked={x => onShowCitation(x)}
                             onThoughtProcessClicked={() => onToggleTab(AnalysisPanelTabs.ThoughtProcessTab)}
                             onSupportingContentClicked={() => onToggleTab(AnalysisPanelTabs.SupportingContentTab)}
@@ -223,7 +250,7 @@ const OneShot = () => {
 
                 <SpinButton
                     className={styles.oneshotSettingsSeparator}
-                    label="Retrieve this many documents from search:"
+                    label="Retrieve this many search results:"
                     min={1}
                     max={50}
                     defaultValue={retrieveCount.toString()}
@@ -243,9 +270,39 @@ const OneShot = () => {
                     onChange={onUseSemanticCaptionsChange}
                     disabled={!useSemanticRanker}
                 />
+                {useLogin && (
+                    <Checkbox
+                        className={styles.oneshotSettingsSeparator}
+                        checked={useOidSecurityFilter}
+                        label="Use oid security filter"
+                        disabled={!client?.getActiveAccount()}
+                        onChange={onUseOidSecurityFilterChange}
+                    />
+                )}
+                {useLogin &&  (
+                    <Checkbox
+                        className={styles.oneshotSettingsSeparator}
+                        checked={useGroupsSecurityFilter}
+                        label="Use groups security filter"
+                        disabled={!client?.getActiveAccount()}
+                        onChange={onUseGroupsSecurityFilterChange}
+                    />
+                )}
+                <Dropdown
+                    className={styles.oneshotSettingsSeparator}
+                    label="Retrieval mode"
+                    options={[
+                        { key: "hybrid", text: "Vectors + Text (Hybrid)", selected: retrievalMode == RetrievalMode.Hybrid, data: RetrievalMode.Hybrid },
+                        { key: "vectors", text: "Vectors", selected: retrievalMode == RetrievalMode.Vectors, data: RetrievalMode.Vectors },
+                        { key: "text", text: "Text", selected: retrievalMode == RetrievalMode.Text, data: RetrievalMode.Text }
+                    ]}
+                    required
+                    onChange={onRetrievalModeChange}
+                />
+                { useLogin && <TokenClaimsDisplay />}
             </Panel>
         </div>
     );
-};
+}
 
-export default OneShot;
+Component.displayName = "OneShot";

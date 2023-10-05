@@ -4,6 +4,10 @@ import github from "../../assets/github.svg";
 
 import styles from "./Layout.module.css";
 
+import { useLogin } from "../../authConfig"
+
+import { LoginButton } from "../../components/LoginButton"
+
 const Layout = () => {
     return (
         <div className={styles.layout}>
@@ -12,7 +16,7 @@ const Layout = () => {
                     <Link to="/" className={styles.headerTitleContainer}>
                         <h3 className={styles.headerTitle}>Nexible Chatbot</h3>
                     </Link>
-                    {/*
+                     {/*
                     <nav>
 
                          <ul className={styles.headerNavList}>
@@ -44,6 +48,7 @@ const Layout = () => {
                     </nav>
                     */}
                     {/* <h4 className={styles.headerRightText}>Azure OpenAI + Cognitive Search</h4> */}
+                    {useLogin && <LoginButton/>}
                 </div>
             </header>
 
