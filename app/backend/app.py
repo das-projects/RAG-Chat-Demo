@@ -4,8 +4,6 @@ import logging
 import mimetypes
 import os
 import time
-import uuid
-from datetime import datetime
 from pathlib import Path
 from typing import AsyncGenerator
 
@@ -28,7 +26,6 @@ from quart import (
     request,
     send_file,
     send_from_directory,
-    Response,
 )
 from quart_cors import cors
 
@@ -41,7 +38,6 @@ CONFIG_CREDENTIAL = "azure_credential"
 CONFIG_ASK_APPROACH = "ask_approach"
 CONFIG_CHAT_APPROACH = "chat_approach"
 CONFIG_BLOB_CONTAINER_CLIENT = "blob_container_client"
-CONFIG_CHAT_HISTORY_CONTAINER_CLIENT = "chat_history_container_client"
 CONFIG_AUTH_CLIENT = "auth_client"
 CONFIG_SEARCH_CLIENT = "search_client"
 ERROR_MESSAGE = """The app encountered an error processing your request.
@@ -139,42 +135,6 @@ async def format_as_ndjson(r: AsyncGenerator[dict, None]) -> AsyncGenerator[str,
         yield json.dumps(error_dict(e))
 
 
-async def append_chat_history(user_id: str, request_json: dict) -> bool:
-    chat_history_container_client = current_app.config[CONFIG_CHAT_HISTORY_CONTAINER_CLIENT]
-    chat_blob_name = f"chat_history_{user_id}_{datetime.today().strftime('%Y-%m-%d')}.json"
-    # chat_blob_client = chat_history_container_client.get_blob_client(chat_blob_name)
-
-    try:
-        # Assuming response is an async_generator responses, we'll store them all.
-        # response_data = json.loads(await response.get_data())
-        chat_data = {
-            "history": request_json["history"],
-            # "response": response_data,
-            "timestamp": time.time()
-        }
-
-        # Fetch the existing blob content if it exists.
-        existing_content = []
-        try:
-            stream = await chat_history_container_client.download_blob(chat_blob_name)
-            existing_content = json.loads(await stream.readall())
-        except Exception as e:
-            logging.info(f"No existing chat stream found for user {user_id}. A new one will be created.")
-
-        # Append the new chat stream to the existing content.
-        existing_content.append(chat_data)
-
-        # Serialize the updated content.
-        chat_data_serialized = json.dumps(existing_content, ensure_ascii=False, indent=2)
-
-        # Save it back to the blob.
-        await chat_history_container_client.upload_blob(chat_blob_name, chat_data_serialized, overwrite=True)
-        return True
-    except Exception as e:
-        logging.exception("Failed to append chat stream history")
-        return False
-
-
 @bp.route("/chat", methods=["POST"])
 async def chat():
     if not request.is_json:
@@ -183,11 +143,6 @@ async def chat():
     context = request_json.get("context", {})
     auth_helper = current_app.config[CONFIG_AUTH_CLIENT]
     context["auth_claims"] = await auth_helper.get_auth_claims_if_enabled(request.headers)
-    # Get user's IP as a simple UID or generate a random one.
-    user_id = str(request.remote_addr)
-    if user_id is None:
-        user_id = str(uuid.uuid4())
-    success = await append_chat_history(user_id, request_json)
     try:
         approach = current_app.config[CONFIG_CHAT_APPROACH]
         result = await approach.run(
@@ -285,12 +240,6 @@ async def setup_clients():
     )
     blob_container_client = blob_client.get_container_client(AZURE_STORAGE_CONTAINER)
 
-    # Get the container to store chat history
-    chat_history_container = "chathistory"
-    chat_history_container_client = blob_client.get_container_client(chat_history_container)
-    if not chat_history_container_client.exists():
-        chat_history_container_client.create_container()
-
     # Used by the OpenAI SDK
     if OPENAI_HOST == "azure":
         openai.api_type = "azure_ad"
@@ -309,7 +258,6 @@ async def setup_clients():
     current_app.config[CONFIG_SEARCH_CLIENT] = search_client
     current_app.config[CONFIG_BLOB_CONTAINER_CLIENT] = blob_container_client
     current_app.config[CONFIG_AUTH_CLIENT] = auth_helper
-    current_app.config[CONFIG_CHAT_HISTORY_CONTAINER_CLIENT] = chat_history_container_client
 
     # Various approaches to integrate GPT and external knowledge, most applications will use a single one of these patterns
     # or some derivative, here we include several for exploration purposes

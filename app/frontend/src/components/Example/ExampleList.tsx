@@ -9,17 +9,11 @@ export type ExampleModel = {
 
 const EXAMPLES: ExampleModel[] = [
     {
-        text: "Was ist bei der Nexible Reiserücktrittsversicherung alles abgedeckt?",
-        value: "Was ist bei der Nexible Reiserücktrittsversicherung alles abgedeckt?"
+        text: "What is included in my Northwind Health Plus plan that is not in standard?",
+        value: "What is included in my Northwind Health Plus plan that is not in standard?"
     },
-    {
-        text: "Welche Zahnzusatz-Tarife gibt es?",
-        value: "Welche Zahnzusatz-Tarife gibt es?"
-    },
-    {
-        text: "Wie kann ich Zahnarztrechnungen einreichen?",
-        value: "Wie kann ich Zahnarztrechnungen einreichen?"
-    }
+    { text: "What happens in a performance review?", value: "What happens in a performance review?" },
+    { text: "What does a Product Manager do?", value: "What does a Product Manager do?" }
 ];
 
 interface Props {
