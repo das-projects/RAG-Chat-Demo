@@ -11,6 +11,7 @@ import msal
 import openai
 import pytest
 import pytest_asyncio
+from azure.core.credentials_async import AsyncTokenCredential
 from azure.search.documents.aio import SearchClient
 
 import app
@@ -19,7 +20,7 @@ from core.authentication import AuthenticationHelper
 MockToken = namedtuple("MockToken", ["token", "expires_on"])
 
 
-class MockAzureCredential:
+class MockAzureCredential(AsyncTokenCredential):
     async def get_token(self, uri):
         return MockToken("mock_token", 9999999999)
 
@@ -39,21 +40,40 @@ def mock_openai_embedding(monkeypatch):
 @pytest.fixture
 def mock_openai_chatcompletion(monkeypatch):
     class AsyncChatCompletionIterator:
-        def __init__(self, answer):
-            self.num = 2
-            self.answer = answer
+        def __init__(self, answer: str):
+            self.responses = [
+                {"object": "chat.completion.chunk", "choices": []},
+                {"object": "chat.completion.chunk", "choices": [{"delta": {"role": "assistant"}}]},
+            ]
+            # Split at << to simulate chunked responses
+            if answer.find("<<") > -1:
+                parts = answer.split("<<")
+                self.responses.append(
+                    {
+                        "object": "chat.completion.chunk",
+                        "choices": [{"delta": {"role": "assistant", "content": parts[0] + "<<"}}],
+                    }
+                )
+                self.responses.append(
+                    {
+                        "object": "chat.completion.chunk",
+                        "choices": [{"delta": {"role": "assistant", "content": parts[1]}}],
+                    }
+                )
+            else:
+                self.responses.append(
+                    {
+                        "object": "chat.completion.chunk",
+                        "choices": [{"delta": {"content": answer}}],
+                    }
+                )
 
         def __aiter__(self):
             return self
 
         async def __anext__(self):
-            if self.num == 2:
-                self.num -= 1
-                # Emulate the first response being empty - bug with "2023-07-01-preview"
-                return openai.util.convert_to_openai_object({"choices": []})
-            elif self.num == 1:
-                self.num -= 1
-                return openai.util.convert_to_openai_object({"choices": [{"delta": {"content": self.answer}}]})
+            if self.responses:
+                return self.responses.pop(0)
             else:
                 raise StopAsyncIteration
 
@@ -66,11 +86,15 @@ def mock_openai_chatcompletion(monkeypatch):
         if messages[-1]["content"] == "Generate search query for: What is the capital of France?":
             answer = "capital of France"
         else:
-            answer = "The capital of France is Paris."
+            answer = "The capital of France is Paris. [Benefit_Options-2.pdf]."
+            if messages[0]["content"].find("Generate 3 very brief follow-up questions") > -1:
+                answer = "The capital of France is Paris. [Benefit_Options-2.pdf]. <<What is the capital of Spain?>>"
         if "stream" in kwargs and kwargs["stream"] is True:
             return AsyncChatCompletionIterator(answer)
         else:
-            return openai.util.convert_to_openai_object({"choices": [{"message": {"content": answer}}]})
+            return openai.util.convert_to_openai_object(
+                {"object": "chat.completion", "choices": [{"message": {"role": "assistant", "content": answer}}]}
+            )
 
     monkeypatch.setattr(openai.ChatCompletion, "acreate", mock_acreate)
 
@@ -390,7 +414,7 @@ def mock_data_lake_service_client(monkeypatch):
         self.directories = {}
 
     def mock_get_file_client(self, path, *args, **kwargs):
-        return azure.storage.filedatalake.DataLakeFileClient(
+        return azure.storage.filedatalake.aio.DataLakeFileClient(
             account_url=None, file_system_name=None, file_path=path, credential=None
         )
 
@@ -413,18 +437,37 @@ def mock_data_lake_service_client(monkeypatch):
         self.directories["/"].child_directories = self.directories
         return self.directories["/"]
 
-    def mock_get_paths(self, *args, **kwargs):
-        return [argparse.Namespace(is_directory=False, name=name) for name in ["a.txt", "b.txt", "c.txt"]]
+    class AsyncListIterator:
+        def __init__(self, input_list):
+            self.input_list = input_list
+            self.index = 0
+
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            if self.index < len(self.input_list):
+                value = self.input_list[self.index]
+                self.index += 1
+                return value
+            else:
+                raise StopAsyncIteration
+
+    async def mock_get_paths(self, *args, **kwargs):
+        yield argparse.Namespace(is_directory=False, name="a.txt")
+        yield argparse.Namespace(is_directory=False, name="b.txt")
+        yield argparse.Namespace(is_directory=False, name="c.txt")
 
     monkeypatch.setattr(azure.storage.filedatalake.FileSystemClient, "__init__", mock_init)
     monkeypatch.setattr(azure.storage.filedatalake.FileSystemClient, "get_file_client", mock_get_file_client)
-    monkeypatch.setattr(azure.storage.filedatalake.FileSystemClient, "get_paths", mock_get_paths)
 
     monkeypatch.setattr(azure.storage.filedatalake.aio.FileSystemClient, "__init__", mock_init_filesystem_aio)
     monkeypatch.setattr(azure.storage.filedatalake.aio.FileSystemClient, "__aenter__", mock_aenter)
     monkeypatch.setattr(azure.storage.filedatalake.aio.FileSystemClient, "__aexit__", mock_aexit)
     monkeypatch.setattr(azure.storage.filedatalake.aio.FileSystemClient, "get_paths", mock_get_paths)
     monkeypatch.setattr(azure.storage.filedatalake.aio.FileSystemClient, "exists", mock_exists_aio)
+    monkeypatch.setattr(azure.storage.filedatalake.aio.FileSystemClient, "get_paths", mock_get_paths)
+    monkeypatch.setattr(azure.storage.filedatalake.aio.FileSystemClient, "get_file_client", mock_get_file_client)
     monkeypatch.setattr(
         azure.storage.filedatalake.aio.FileSystemClient, "create_file_system", mock_create_filesystem_aio
     )
@@ -445,15 +488,15 @@ def mock_data_lake_service_client(monkeypatch):
     def mock_download_file_aio(self, *args, **kwargs):
         return azure.storage.filedatalake.aio.StorageStreamDownloader(None)
 
-    def mock_get_access_control(self, *args, **kwargs):
-        if self.path.name == "a.txt":
+    async def mock_get_access_control(self, *args, **kwargs):
+        if self.path == "a.txt":
             return {"acl": "user:A-USER-ID:r-x,group:A-GROUP-ID:r-x"}
-        if self.path.name == "b.txt":
+        if self.path == "b.txt":
             return {"acl": "user:B-USER-ID:r-x,group:B-GROUP-ID:r-x"}
-        if self.path.name == "c.txt":
+        if self.path == "c.txt":
             return {"acl": "user:C-USER-ID:r-x,group:C-GROUP-ID:r-x"}
 
-        raise Exception(f"Unexpected path {self.path.name}")
+        raise Exception(f"Unexpected path {self.path}")
 
     async def mock_upload_data_aio(self, *args, **kwargs):
         self.uploaded = True
@@ -461,7 +504,9 @@ def mock_data_lake_service_client(monkeypatch):
 
     monkeypatch.setattr(azure.storage.filedatalake.DataLakeFileClient, "__init__", mock_init_file)
     monkeypatch.setattr(azure.storage.filedatalake.DataLakeFileClient, "download_file", mock_download_file)
-    monkeypatch.setattr(azure.storage.filedatalake.DataLakeFileClient, "get_access_control", mock_get_access_control)
+    monkeypatch.setattr(
+        azure.storage.filedatalake.aio.DataLakeFileClient, "get_access_control", mock_get_access_control
+    )
 
     monkeypatch.setattr(azure.storage.filedatalake.aio.DataLakeFileClient, "__init__", mock_init_file)
     monkeypatch.setattr(azure.storage.filedatalake.aio.DataLakeFileClient, "__aenter__", mock_aenter)
