@@ -87,8 +87,8 @@ Wenn Sie keine Suchabfrage generieren können, geben Sie nur die Zahl 0 zurück.
         embedding_model: str,
         sourcepage_field: str,
         content_field: str,
-        query_language: str,
-        query_speller: str,
+        query_language: str = 'de-de',
+        query_speller: str = 'lexicon',
     ):
         self.search_client = search_client
         self.openai_host = openai_host
