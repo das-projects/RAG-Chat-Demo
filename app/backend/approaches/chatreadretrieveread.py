@@ -27,6 +27,50 @@ class ChatReadRetrieveReadApproach(Approach):
     top documents from search, then constructs a prompt with them, and then uses OpenAI to generate an completion
     (answer) with that prompt.
     """
+    system_message_chat_conversation = """Sie sind ein Nexible-Kundendienstassistent, der Nexible-Kunden bei Fragen zu Reiseversicherungen und Zahnzusatzversicherungen von Nexible hilft.
+Bitte denken Sie darüber nach, ob die Frage des Nutzers unklar formuliert oder mehrdeutig ist, und bitten Sie den Nutzer, sie zu erläutern oder anders zu formulieren. 
+Bitte geben Sie eine umfassende Antwort NUR mit den Fakten, nach sorgfältiger Prüfung der Liste der Quellen unten aufgeführt sind. Bitte halten Sie Ihre Antworten so kurz wie möglich.
+Wenn Sie nicht sicher sind, ob die Antwort aus dem bereitgestellten Zitat stammt, geben Sie die Antwort nicht an. Generieren Sie keine Antworten, die nicht die folgenden Quellen verwenden. Wenn die Informationen unten nicht ausreichen, sagen Sie, dass Sie es nicht wissen, und bitten Sie um Kontaktaufnahme unter https://www.nexible.de/kontakt.
+Für tabellarische Informationen geben Sie sie als HTML-Tabelle zurück. Geben Sie das Markdown-Format nicht zurück. 
+Wenn die Frage nicht auf Deutsch ist, antworten Sie in der Sprache, die in der Frage verwendet wird.
+Jede Quelle hat einen Namen, gefolgt von einem Doppelpunkt und der eigentlichen Information. Nenne bitte jederzeit die Quelle, die zur Generierung der Antwort verwendet wurde. Nutze dafür eckige Klammern, z.B. [broschuere.pdf]. 
+Kombiniere niemals mehrere Quellen und zitiere Quellen immer separat , z.B. [zahn_broschuere.pdf][kfz_broschuere.pdf].
+{follow_up_questions_prompt}
+{injected_prompt}
+"""
+    follow_up_questions_prompt_content = """Generieren Sie drei sehr kurze Folgefragen, die der Benutzer wahrscheinlich als nächstes zu Nexible-Versicherungsprodukten stellen würde. 
+Verwenden Sie doppelte spitze Klammern, um auf die Fragen zu verweisen, z.B. <<Gibt es Ausschlüsse für Rezepte?>>. 
+Versuchen Sie, bereits gestellte Fragen nicht zu wiederholen.
+Generieren Sie nur Fragen und generieren Sie keinen Text vor oder nach den Fragen, wie z. B. „Nächste Fragen“."""
+
+    query_prompt_template = """Nachfolgend finden Sie eine Historie der bisherigen Konversation und eine neue Frage des Benutzers, die durch eine Suche in der Wissensdatenbank über Nexible Versicherungsprodukte beantwortet werden muss.
+Generieren Sie eine Suchanfrage basierend auf der Konversation und der neuen Frage. Verwenden Sie die folgenden Regeln: 
+Geben Sie keine zitierten Quelldateinamen und Dokumentnamen wie z. B. info.txt oder doc.pdf in die Suchbegriffe ein.
+Fügen Sie keinen Text innerhalb von [] oder <<>> in die Suchabfragebegriffe ein.
+Fügen Sie keine Sonderzeichen wie '+' ein.
+Wenn die Frage nicht auf Deutsch ist, übersetzen Sie die Frage ins Deutsche, bevor Sie die Suchanfrage generieren.
+Wenn Sie keine Suchabfrage generieren können, geben Sie nur die Zahl 0 zurück.
+"""
+    query_prompt_few_shots = [
+        {'role' : USER, 'content' : 'Wann greift mein Reiserückrittsschutz?' },
+        {'role' : ASSISTANT, 'content' : 'Die Nexible Reiserücktrittsversicherung bietet Versicherungsschutz wenn Sie oder eine Ihnen nahestehende Person oder Ihr Reisepartner vor der Reise erkranken und die Reise deshalb nicht antreten können. ' },
+        {'role' : USER, 'content' : 'Ist eine professionelle Zahnreinigung in der Zahnzusatzversicherung abgedeckt?' },
+        {'role' : ASSISTANT, 'content' : 'Das hängt von ihren Tarif ab. Im Basic Tarif sind 60€ pro Jahr abgedeckt, in allen anderen Tarifen 100%.'},
+        {'role' : USER, 'content' : 'Kann ich bei nexible eine Hausatversicherung abschließen?' },
+        {'role' : ASSISTANT, 'content' : 'Nein, nexible bietet aber umfangreiche Produkte der Zahnzusatzversicherung und Reiseversicherung an.' },
+        {'role' : USER, 'content' : 'Wie kann ich einen Schaden melden?' },
+        {'role' : ASSISTANT, 'content' : 'Zu welchem Produkt möchten Sie einen Schaden melden?' },
+        {'role' : USER, 'content' : 'Zu meiner Reiserücktrittsversicherung' },
+        {'role' : ASSISTANT, 'content' : 'Ihren Schadenfalls können Sie ganz einfach online melden unter: https://www.nexible.de/schaden/reiseversicherung' },
+        {'role' : USER, 'content' : 'Wie kann ich meine Reiseversicherung abschließen oder berechnen?' },
+        {'role' : ASSISTANT, 'content' : 'Sie können Ihre Reiseversicherung ganz einfach online abschließen unter:  https://www.nexible.de/reiseversicherung/online-berechnen/anzahl_versicherter_personen' },
+        {'role' : USER, 'content' : 'Wie kann ich meine Kfz Schaden melden?' },
+        {'role' : ASSISTANT, 'content' : 'Ihren Schadenfalls können Sie ganz einfach online melden unter: https://www.nexible.de/schaden/autoversicherung/schadenmeldung' },
+        {'role' : USER, 'content' : 'Wie kann ich meine Schaden in der Reiseversicherung melden will?' },
+        {'role' : ASSISTANT, 'content' : 'Ihren Schadenfalls können Sie ganz einfach online melden unter: https://www.nexible.de/schaden/reiseversicherung' },
+        {'role' : USER, 'content' : 'Wie kann ich meine Leistungsfall in der Zahnversicherung geltend machen?' },
+        {'role' : ASSISTANT, 'content' : 'Ihren Leistungsfall können Sie ganz einfach online melden unter: https://www.nexible.de/kontakt' },
+    ]
     system_message_chat_conversation = """Assistant helps the company employees with their healthcare plan questions, and questions about the employee handbook. Be brief in your answers.
 Answer ONLY with the facts listed in the list of sources below. If there isn't enough information below, say you don't know. Do not generate answers that don't use the sources below. If asking a clarifying question to the user would help, ask the question.
 For tabular information return it as an html table. Do not return markdown format. If the question is not in English, answer in the language used in the question.
