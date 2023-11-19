@@ -23,9 +23,9 @@ class ChatReadRetrieveReadApproach(Approach):
     NO_RESPONSE = "0"
 
     """
-    Simple retrieve-then-read implementation, using the Cognitive Search and OpenAI APIs directly. It first retrieves
-    top documents from search, then constructs a prompt with them, and then uses OpenAI to generate an completion
-    (answer) with that prompt.
+    A multi-step approach that first uses OpenAI to turn the user's question into a search query,
+    then uses Azure AI Search to retrieve relevant documents, and then sends the conversation history,
+    original user question, and search results to OpenAI to generate a response.
     """
     system_message_chat_conversation = """Sie sind ein Nexible-Kundendienstassistent, der Nexible-Kunden bei Fragen zu Reiseversicherungen und Zahnzusatzversicherungen von Nexible hilft.
 Bitte denken Sie darüber nach, ob die Frage des Nutzers unklar formuliert oder mehrdeutig ist, und bitten Sie den Nutzer, sie zu erläutern oder anders zu formulieren. 
@@ -39,7 +39,11 @@ Kombiniere niemals mehrere Quellen und zitiere Quellen immer separat , z.B. [zah
 {injected_prompt}
 """
     follow_up_questions_prompt_content = """Generieren Sie drei sehr kurze Folgefragen, die der Benutzer wahrscheinlich als nächstes zu Nexible-Versicherungsprodukten stellen würde. 
-Verwenden Sie doppelte spitze Klammern, um auf die Fragen zu verweisen, z.B. <<Gibt es Ausschlüsse für Rezepte?>>. 
+Verwenden Sie doppelte spitze Klammern, um auf die Fragen zu verweisen, z.B. 
+<<Gibt es Ausschlüsse für Rezepte?>>
+<<Are there exclusions for prescriptions?>>
+<<Which pharmacies can be ordered from?>>
+<<What is the limit for over-the-counter medication?>>
 Versuchen Sie, bereits gestellte Fragen nicht zu wiederholen.
 Generieren Sie nur Fragen und generieren Sie keinen Text vor oder nach den Fragen, wie z. B. „Nächste Fragen“."""
 
@@ -71,7 +75,7 @@ Wenn Sie keine Suchabfrage generieren können, geben Sie nur die Zahl 0 zurück.
         {'role' : USER, 'content' : 'Wie kann ich meine Leistungsfall in der Zahnversicherung geltend machen?' },
         {'role' : ASSISTANT, 'content' : 'Ihren Leistungsfall können Sie ganz einfach online melden unter: https://www.nexible.de/kontakt' },
     ]
-    
+
     def __init__(
         self,
         search_client: SearchClient,
@@ -116,7 +120,7 @@ Wenn Sie keine Suchabfrage generieren können, geben Sie nur die Zahl 0 zurück.
         functions = [
             {
                 "name": "search_sources",
-                "description": "Retrieve sources from the Azure Cognitive Search index",
+                "description": "Retrieve sources from the Azure AI Search index",
                 "parameters": {
                     "type": "object",
                     "properties": {
