@@ -215,7 +215,7 @@ Wenn Sie keine Suchabfrage generieren können, geben Sie nur die Zahl 0 zurück.
         prompt_override = overrides.get("prompt_template")
         if prompt_override is None:
             system_message = self.system_message_chat_conversation.format(
-                injected_prompt="", follow_up_questions_prompt=follow_up_questions_prompt
+                injected_prompt=self.query_prompt_template, follow_up_questions_prompt=follow_up_questions_prompt
             )
         elif prompt_override.startswith(">>>"):
             system_message = self.system_message_chat_conversation.format(
@@ -233,6 +233,7 @@ Wenn Sie keine Suchabfrage generieren können, geben Sie nur die Zahl 0 zurück.
             # Model does not handle lengthy system messages well. Moving sources to latest user conversation to solve follow up questions prompt.
             user_content=original_user_query + "\n\nSources:\n" + content,
             max_tokens=messages_token_limit,
+            few_shots=self.query_prompt_few_shots,
         )
         msg_to_display = "\n\n".join([str(message) for message in messages])
 
