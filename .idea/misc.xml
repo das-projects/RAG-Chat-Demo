@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="RAG-Chat-Demo" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.11.5 WSL (Ubuntu): (/mnt/c/Users/ariji/PycharmProjects/DeepRAGTuner/.venv/bin/python)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.10 (RAG-Chat-Demo)" project-jdk-type="Python SDK" />
 </project>
