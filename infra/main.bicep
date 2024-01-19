@@ -21,23 +21,29 @@ param searchServiceName string = ''
 param searchServiceResourceGroupName string = ''
 param searchServiceLocation string = ''
 // The free tier does not support managed identity (required) or semantic search (optional)
-@allowed(['basic', 'standard', 'standard2', 'standard3', 'storage_optimized_l1', 'storage_optimized_l2'])
+@allowed([ 'basic', 'standard', 'standard2', 'standard3', 'storage_optimized_l1', 'storage_optimized_l2' ])
 param searchServiceSkuName string // Set in main.parameters.json
 param searchIndexName string // Set in main.parameters.json
 param searchQueryLanguage string // Set in main.parameters.json
 param searchQuerySpeller string // Set in main.parameters.json
 
 param storageAccountName string = ''
+param keyVaultResourceGroupName string = ''
 param storageResourceGroupName string = ''
 param storageResourceGroupLocation string = location
 param storageContainerName string = 'content'
 param storageSkuName string // Set in main.parameters.json
 
-@allowed(['azure', 'openai'])
+@allowed([ 'azure', 'openai' ])
 param openAiHost string // Set in main.parameters.json
 
 param openAiServiceName string = ''
 param openAiResourceGroupName string = ''
+param useGPT4V bool = false
+
+param keyVaultServiceName string = ''
+param computerVisionSecretName string = 'computerVisionSecret'
+
 @description('Location for the OpenAI resource group')
 @allowed(['canadaeast', 'eastus', 'eastus2', 'francecentral', 'switzerlandnorth', 'uksouth', 'japaneast', 'northcentralus', 'australiaeast', 'swedencentral'])
 @metadata({
@@ -55,23 +61,37 @@ param openAiApiOrganization string = ''
 param formRecognizerServiceName string = ''
 param formRecognizerResourceGroupName string = ''
 param formRecognizerResourceGroupLocation string = location
-
 param formRecognizerSkuName string = 'S0'
+
+param computerVisionServiceName string = ''
+param computerVisionResourceGroupName string = ''
+param computerVisionResourceGroupLocation string = 'eastus' // Vision vectorize API is yet to be deployed globally
+param computerVisionSkuName string = 'S1'
 
 param chatGptDeploymentName string // Set in main.parameters.json
 param chatGptDeploymentCapacity int = 30
+param chatGpt4vDeploymentCapacity int = 10
 param chatGptModelName string = (openAiHost == 'azure') ? 'gpt-35-turbo' : 'gpt-3.5-turbo'
 param chatGptModelVersion string = '0613'
 param embeddingDeploymentName string // Set in main.parameters.json
 param embeddingDeploymentCapacity int = 30
 param embeddingModelName string = 'text-embedding-ada-002'
+param gpt4vModelName string = 'gpt-4'
+param gpt4vDeploymentName string = 'gpt-4v'
+param gpt4vModelVersion string = 'vision-preview'
+
+param tenantId string = tenant().tenantId
+param authTenantId string = ''
 
 // Used for the optional login and document level access control system
 param useAuthentication bool = false
+param enforceAccessControl bool = false
 param serverAppId string = ''
 @secure()
 param serverAppSecret string = ''
 param clientAppId string = ''
+@secure()
+param clientAppSecret string = ''
 
 // Used for optional CORS support for alternate frontends
 param allowedOrigin string = '' // should start with https://, shouldn't end with a /
@@ -85,6 +105,11 @@ param useApplicationInsights bool = false
 var abbrs = loadJsonContent('abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
 var tags = { 'azd-env-name': environmentName }
+var computerVisionName = !empty(computerVisionServiceName) ? computerVisionServiceName : '${abbrs.cognitiveServicesComputerVision}${resourceToken}'
+var keyVaultName = !empty(keyVaultServiceName) ? keyVaultServiceName : '${abbrs.keyVaultVaults}${resourceToken}'
+
+var tenantIdForAuth = !empty(authTenantId) ? authTenantId : tenantId
+var authenticationIssuerUri = '${environment().authentication.loginEndpoint}${tenantIdForAuth}/v2.0'
 
 // Organize resources in a resource group
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
@@ -101,12 +126,20 @@ resource formRecognizerResourceGroup 'Microsoft.Resources/resourceGroups@2021-04
   name: !empty(formRecognizerResourceGroupName) ? formRecognizerResourceGroupName : resourceGroup.name
 }
 
+resource computerVisionResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = if (!empty(computerVisionResourceGroupName)) {
+  name: !empty(computerVisionResourceGroupName) ? computerVisionResourceGroupName : resourceGroup.name
+}
+
 resource searchServiceResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = if (!empty(searchServiceResourceGroupName)) {
   name: !empty(searchServiceResourceGroupName) ? searchServiceResourceGroupName : resourceGroup.name
 }
 
 resource storageResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = if (!empty(storageResourceGroupName)) {
   name: !empty(storageResourceGroupName) ? storageResourceGroupName : resourceGroup.name
+}
+
+resource keyVaultResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = if (!empty(keyVaultResourceGroupName)) {
+  name: !empty(keyVaultResourceGroupName) ? keyVaultResourceGroupName : resourceGroup.name
 }
 
 // Monitor application with Azure Monitor
@@ -164,11 +197,18 @@ module backend 'core/host/appservice.bicep' = {
     scmDoBuildDuringDeployment: true
     managedIdentity: true
     allowedOrigins: [allowedOrigin]
+    clientAppId: clientAppId
+    serverAppId: serverAppId
+    clientSecretSettingName: !empty(clientAppSecret) ? 'AZURE_CLIENT_APP_SECRET' : ''
+    authenticationIssuerUri: authenticationIssuerUri
     appSettings: {
       AZURE_STORAGE_ACCOUNT: storage.outputs.name
       AZURE_STORAGE_CONTAINER: storageContainerName
       AZURE_SEARCH_INDEX: searchIndexName
       AZURE_SEARCH_SERVICE: searchService.outputs.name
+      AZURE_VISION_ENDPOINT: useGPT4V ? computerVision.outputs.endpoint : ''
+      VISION_SECRET_NAME: useGPT4V ? computerVisionSecretName: ''
+      AZURE_KEY_VAULT_NAME: useGPT4V ? keyVaultName: ''
       AZURE_SEARCH_QUERY_LANGUAGE: searchQueryLanguage
       AZURE_SEARCH_QUERY_SPELLER: searchQuerySpeller
       APPLICATIONINSIGHTS_CONNECTION_STRING: useApplicationInsights ? monitoring.outputs.applicationInsightsConnectionString : ''
@@ -176,26 +216,76 @@ module backend 'core/host/appservice.bicep' = {
       OPENAI_HOST: openAiHost
       AZURE_OPENAI_EMB_MODEL_NAME: embeddingModelName
       AZURE_OPENAI_CHATGPT_MODEL: chatGptModelName
+      AZURE_OPENAI_GPT4V_MODEL: gpt4vModelName
       // Specific to Azure OpenAI
       AZURE_OPENAI_SERVICE: openAiHost == 'azure' ? openAi.outputs.name : ''
       AZURE_OPENAI_CHATGPT_DEPLOYMENT: chatGptDeploymentName
       AZURE_OPENAI_EMB_DEPLOYMENT: embeddingDeploymentName
+      AZURE_OPENAI_GPT4V_DEPLOYMENT: useGPT4V ? gpt4vDeploymentName : ''
       // Used only with non-Azure OpenAI deployments
       OPENAI_API_KEY: openAiApiKey
       OPENAI_ORGANIZATION: openAiApiOrganization
       // Optional login and document level access control system
       AZURE_USE_AUTHENTICATION: useAuthentication
+      AZURE_ENFORCE_ACCESS_CONTROL: enforceAccessControl
       AZURE_SERVER_APP_ID: serverAppId
       AZURE_SERVER_APP_SECRET: serverAppSecret
       AZURE_CLIENT_APP_ID: clientAppId
-      AZURE_TENANT_ID: tenant().tenantId
+      AZURE_CLIENT_APP_SECRET: clientAppSecret
+      AZURE_TENANT_ID: tenantId
+      AZURE_AUTH_TENANT_ID: tenantIdForAuth
+      AZURE_AUTHENTICATION_ISSUER_URI: authenticationIssuerUri
       // CORS support, for frontends on other hosts
       ALLOWED_ORIGIN: allowedOrigin
+
+      USE_GPT4V: useGPT4V
     }
   }
 }
 
-module openAi 'core/ai/cognitiveservices.bicep' = if (openAiHost == 'azure') {
+var defaultOpenAiDeployments = [
+  {
+    name: chatGptDeploymentName
+    model: {
+      format: 'OpenAI'
+      name: chatGptModelName
+      version: chatGptModelVersion
+    }
+    sku: {
+      name: 'Standard'
+      capacity: chatGptDeploymentCapacity
+    }
+  }
+  {
+    name: embeddingDeploymentName
+    model: {
+      format: 'OpenAI'
+      name: embeddingModelName
+      version: '2'
+    }
+    sku: {
+      name: 'Standard'
+      capacity: embeddingDeploymentCapacity
+    }
+  }
+]
+
+var openAiDeployments = concat(defaultOpenAiDeployments, useGPT4V ? [
+    {
+      name: gpt4vDeploymentName
+      model: {
+        format: 'OpenAI'
+        name: gpt4vModelName
+        version: gpt4vModelVersion
+      }
+      sku: {
+        name: 'Standard'
+        capacity: chatGpt4vDeploymentCapacity
+      }
+    }
+  ] : [])
+
+module openAi 'core/ai/cognitiveservices.bicep' = {
   name: 'openai'
   scope: openAiResourceGroup
   params: {
@@ -205,32 +295,7 @@ module openAi 'core/ai/cognitiveservices.bicep' = if (openAiHost == 'azure') {
     sku: {
       name: openAiSkuName
     }
-    deployments: [
-      {
-        name: chatGptDeploymentName
-        model: {
-          format: 'OpenAI'
-          name: chatGptModelName
-          version: chatGptModelVersion
-        }
-        sku: {
-          name: 'Standard'
-          capacity: chatGptDeploymentCapacity
-        }
-      }
-      {
-        name: embeddingDeploymentName
-        model: {
-          format: 'OpenAI'
-          name: embeddingModelName
-          version: '2'
-        }
-        sku: {
-          name: 'Standard'
-          capacity: embeddingDeploymentCapacity
-        }
-      }
-    ]
+    deployments: openAiDeployments
   }
 }
 
@@ -245,6 +310,53 @@ module formRecognizer 'core/ai/cognitiveservices.bicep' = {
     sku: {
       name: formRecognizerSkuName
     }
+  }
+}
+
+module computerVision 'core/ai/cognitiveservices.bicep' = if (useGPT4V) {
+  name: 'computerVision'
+  scope: computerVisionResourceGroup
+  params: {
+    name: computerVisionName
+    kind: 'ComputerVision'
+    location: computerVisionResourceGroupLocation
+    tags: tags
+    sku: {
+      name: computerVisionSkuName
+    }
+  }
+}
+
+
+// Currently, we only need Key Vault for storing Computer Vision key,
+// which is only used for GPT-4V.
+module keyVault 'core/security/keyvault.bicep' = if (useGPT4V) {
+  name: 'keyvault'
+  scope: keyVaultResourceGroup
+  params: {
+    name: keyVaultName
+    location: location
+    principalId: principalId
+  }
+}
+
+module webKVAccess 'core/security/keyvault-access.bicep' = if (useGPT4V) {
+  name: 'web-keyvault-access'
+  scope: keyVaultResourceGroup
+  params: {
+    keyVaultName: keyVaultName
+    principalId: backend.outputs.identityPrincipalId
+  }
+}
+
+module secrets 'secrets.bicep' = if (useGPT4V) {
+  name: 'secrets'
+  scope: keyVaultResourceGroup
+  params: {
+    keyVaultName: keyVaultName
+    storeComputerVisionSecret: useGPT4V
+    computerVisionId: useGPT4V ? computerVision.outputs.id : ''
+    computerVisionSecretName: computerVisionSecretName
   }
 }
 
@@ -384,6 +496,8 @@ module storageRoleBackend 'core/security/role.bicep' = {
   }
 }
 
+// Used to issue search queries
+// https://learn.microsoft.com/azure/search/search-security-rbac
 module searchRoleBackend 'core/security/role.bicep' = {
   scope: searchServiceResourceGroup
   name: 'search-role-backend'
@@ -394,22 +508,43 @@ module searchRoleBackend 'core/security/role.bicep' = {
   }
 }
 
+// Used to read index definitions (required when using authentication)
+// https://learn.microsoft.com/azure/search/search-security-rbac
+module searchReaderRoleBackend 'core/security/role.bicep' = if (useAuthentication) {
+  scope: searchServiceResourceGroup
+  name: 'search-reader-role-backend'
+  params: {
+    principalId: backend.outputs.identityPrincipalId
+    roleDefinitionId: 'acdd72a7-3385-48ef-bd42-f606fba81ae7'
+    principalType: 'ServicePrincipal'
+  }
+}
+
 output AZURE_LOCATION string = location
-output AZURE_TENANT_ID string = tenant().tenantId
+output AZURE_TENANT_ID string = tenantId
+output AZURE_AUTH_TENANT_ID string = authTenantId
 output AZURE_RESOURCE_GROUP string = resourceGroup.name
 
 // Shared by all OpenAI deployments
 output OPENAI_HOST string = openAiHost
 output AZURE_OPENAI_EMB_MODEL_NAME string = embeddingModelName
 output AZURE_OPENAI_CHATGPT_MODEL string = chatGptModelName
+output AZURE_OPENAI_GPT4V_MODEL string = gpt4vModelName
+
 // Specific to Azure OpenAI
 output AZURE_OPENAI_SERVICE string = (openAiHost == 'azure') ? openAi.outputs.name : ''
 output AZURE_OPENAI_RESOURCE_GROUP string = (openAiHost == 'azure') ? openAiResourceGroup.name : ''
 output AZURE_OPENAI_CHATGPT_DEPLOYMENT string = (openAiHost == 'azure') ? chatGptDeploymentName : ''
 output AZURE_OPENAI_EMB_DEPLOYMENT string = (openAiHost == 'azure') ? embeddingDeploymentName : ''
+output AZURE_OPENAI_GPT4V_DEPLOYMENT string = (openAiHost == 'azure') ? gpt4vDeploymentName : ''
+
 // Used only with non-Azure OpenAI deployments
 output OPENAI_API_KEY string = (openAiHost == 'openai') ? openAiApiKey : ''
 output OPENAI_ORGANIZATION string = (openAiHost == 'openai') ? openAiApiOrganization : ''
+
+output AZURE_VISION_ENDPOINT string = useGPT4V ? computerVision.outputs.endpoint : ''
+output VISION_SECRET_NAME string = useGPT4V ? computerVisionSecretName : ''
+output AZURE_KEY_VAULT_NAME string = useGPT4V ? keyVault.outputs.name : ''
 
 output AZURE_FORMRECOGNIZER_SERVICE string = formRecognizer.outputs.name
 output AZURE_FORMRECOGNIZER_RESOURCE_GROUP string = formRecognizerResourceGroup.name
@@ -421,5 +556,7 @@ output AZURE_SEARCH_SERVICE_RESOURCE_GROUP string = searchServiceResourceGroup.n
 output AZURE_STORAGE_ACCOUNT string = storage.outputs.name
 output AZURE_STORAGE_CONTAINER string = storageContainerName
 output AZURE_STORAGE_RESOURCE_GROUP string = storageResourceGroup.name
+
+output AZURE_USE_AUTHENTICATION bool = useAuthentication
 
 output BACKEND_URI string = backend.outputs.uri

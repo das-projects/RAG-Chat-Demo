@@ -21,11 +21,14 @@ asgiref==3.7.2
 attrs==23.1.0
     # via aiohttp
 azure-common==1.1.28
-    # via azure-search-documents
+    # via
+    #   azure-keyvault-secrets
+    #   azure-search-documents
 azure-core==1.29.5
     # via
     #   azure-core-tracing-opentelemetry
     #   azure-identity
+    #   azure-keyvault-secrets
     #   azure-monitor-opentelemetry
     #   azure-monitor-opentelemetry-exporter
     #   azure-search-documents
@@ -35,7 +38,9 @@ azure-core-tracing-opentelemetry==1.0.0b11
     # via azure-monitor-opentelemetry
 azure-identity==1.15.0
     # via -r requirements.in
-azure-monitor-opentelemetry==1.1.1
+azure-keyvault-secrets==4.7.0
+    # via -r requirements.in
+azure-monitor-opentelemetry==1.1.0
     # via -r requirements.in
 azure-monitor-opentelemetry-exporter==1.0.0b19
     # via azure-monitor-opentelemetry
@@ -104,10 +109,11 @@ idna==3.6
     #   httpx
     #   requests
     #   yarl
-importlib-metadata==6.11.0
+importlib-metadata==6.8.0
     # via opentelemetry-api
 isodate==0.6.1
     # via
+    #   azure-keyvault-secrets
     #   azure-search-documents
     #   azure-storage-blob
     #   msrest
@@ -115,7 +121,7 @@ itsdangerous==2.1.2
     # via
     #   flask
     #   quart
-jinja2==3.1.2
+jinja2==3.1.3
     # via
     #   flask
     #   quart
@@ -124,15 +130,13 @@ markupsafe==2.1.3
     #   jinja2
     #   quart
     #   werkzeug
-msal==1.26.0
+msal==1.25.0
     # via
     #   -r requirements.in
     #   azure-identity
     #   msal-extensions
 msal-extensions==1.0.0
-    # via
-    #   -r requirements.in
-    #   azure-identity
+    # via azure-identity
 msrest==0.7.1
     # via azure-monitor-opentelemetry-exporter
 multidict==6.0.4
@@ -147,7 +151,9 @@ numpy==1.26.2
 oauthlib==3.2.2
     # via requests-oauthlib
 openai[datalib]==1.3.7
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   openai
 opentelemetry-api==1.21.0
     # via
     #   azure-core-tracing-opentelemetry
@@ -258,7 +264,9 @@ pydantic==2.5.2
 pydantic-core==2.14.5
     # via pydantic
 pyjwt[crypto]==2.8.0
-    # via msal
+    # via
+    #   msal
+    #   pyjwt
 python-dateutil==2.8.2
     # via pandas
 pytz==2023.3.post1
@@ -299,6 +307,7 @@ types-pytz==2023.3.1.1
 typing-extensions==4.8.0
     # via
     #   azure-core
+    #   azure-keyvault-secrets
     #   azure-storage-blob
     #   openai
     #   opentelemetry-sdk
@@ -323,10 +332,7 @@ wrapt==1.16.0
     #   opentelemetry-instrumentation-urllib3
 wsproto==1.2.0
     # via hypercorn
-yarl==1.9.4
+yarl==1.9.3
     # via aiohttp
 zipp==3.17.0
     # via importlib-metadata
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools

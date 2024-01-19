@@ -1,15 +1,18 @@
-import { useRef, useState } from "react";
-import { Checkbox, ChoiceGroup, IChoiceGroupOption, Panel, DefaultButton, Spinner, TextField, SpinButton, IDropdownOption, Dropdown } from "@fluentui/react";
+import { useEffect, useRef, useState } from "react";
+import { Checkbox, Panel, DefaultButton, Spinner, TextField, SpinButton, IDropdownOption, Dropdown } from "@fluentui/react";
 
 import styles from "./OneShot.module.css";
 
-import { askApi, ChatAppResponse, ChatAppRequest, RetrievalMode } from "../../api";
+import { askApi, configApi, ChatAppResponse, ChatAppRequest, RetrievalMode, VectorFieldOptions, GPT4VInput } from "../../api";
 import { Answer, AnswerError } from "../../components/Answer";
 import { QuestionInput } from "../../components/QuestionInput";
 import { ExampleList } from "../../components/Example";
 import { AnalysisPanel, AnalysisPanelTabs } from "../../components/AnalysisPanel";
 import { SettingsButton } from "../../components/SettingsButton/SettingsButton";
-import { useLogin, getToken } from "../../authConfig";
+import { useLogin, getToken, isLoggedIn, requireAccessControl } from "../../authConfig";
+import { VectorSettings } from "../../components/VectorSettings";
+import { GPT4VSettings } from "../../components/GPT4VSettings";
+
 import { useMsal } from "@azure/msal-react";
 import { TokenClaimsDisplay } from "../../components/TokenClaimsDisplay";
 
@@ -22,9 +25,14 @@ export function Component(): JSX.Element {
     const [retrieveCount, setRetrieveCount] = useState<number>(3);
     const [useSemanticRanker, setUseSemanticRanker] = useState<boolean>(true);
     const [useSemanticCaptions, setUseSemanticCaptions] = useState<boolean>(false);
+    const [useGPT4V, setUseGPT4V] = useState<boolean>(false);
+    const [gpt4vInput, setGPT4VInput] = useState<GPT4VInput>(GPT4VInput.TextAndImages);
     const [excludeCategory, setExcludeCategory] = useState<string>("");
+    const [question, setQuestion] = useState<string>("");
+    const [vectorFieldList, setVectorFieldList] = useState<VectorFieldOptions[]>([VectorFieldOptions.Embedding, VectorFieldOptions.ImageEmbedding]);
     const [useOidSecurityFilter, setUseOidSecurityFilter] = useState<boolean>(false);
     const [useGroupsSecurityFilter, setUseGroupsSecurityFilter] = useState<boolean>(false);
+    const [showGPT4VOptions, setShowGPT4VOptions] = useState<boolean>(false);
 
     const lastQuestionRef = useRef<string>("");
 
@@ -36,6 +44,18 @@ export function Component(): JSX.Element {
     const [activeAnalysisPanelTab, setActiveAnalysisPanelTab] = useState<AnalysisPanelTabs | undefined>(undefined);
 
     const client = useLogin ? useMsal().instance : undefined;
+
+    const getConfig = async () => {
+        const token = client ? await getToken(client) : undefined;
+
+        configApi(token).then(config => {
+            setShowGPT4VOptions(config.showGPT4VOptions);
+        });
+    };
+
+    useEffect(() => {
+        getConfig();
+    }, []);
 
     const makeApiRequest = async (question: string) => {
         lastQuestionRef.current = question;
@@ -66,13 +86,16 @@ export function Component(): JSX.Element {
                         semantic_ranker: useSemanticRanker,
                         semantic_captions: useSemanticCaptions,
                         use_oid_security_filter: useOidSecurityFilter,
-                        use_groups_security_filter: useGroupsSecurityFilter
+                        use_groups_security_filter: useGroupsSecurityFilter,
+                        vector_fields: vectorFieldList,
+                        use_gpt4v: useGPT4V,
+                        gpt4v_input: gpt4vInput
                     }
                 },
                 // ChatAppProtocol: Client must pass on any session state received from the server
                 session_state: answer ? answer.choices[0].session_state : null
             };
-            const result = await askApi(request, token?.accessToken);
+            const result = await askApi(request, token);
             setAnswer(result);
         } catch (e) {
             setError(e);
@@ -115,6 +138,7 @@ export function Component(): JSX.Element {
 
     const onExampleClicked = (example: string) => {
         makeApiRequest(example);
+        setQuestion(example);
     };
 
     const onShowCitation = (citation: string) => {
@@ -151,13 +175,14 @@ export function Component(): JSX.Element {
                     <QuestionInput
                         placeholder="Example: Does my plan cover annual eye exams?"
                         disabled={isLoading}
+                        initQuestion={question}
                         onSend={question => makeApiRequest(question)}
                     />
                 </div>
             </div>
             <div className={styles.oneshotBottomSection}>
                 {isLoading && <Spinner label="Generating answer" />}
-                {!lastQuestionRef.current && <ExampleList onExampleClicked={onExampleClicked} />}
+                {!lastQuestionRef.current && <ExampleList onExampleClicked={onExampleClicked} useGPT4V={useGPT4V} />}
                 {!isLoading && answer && !error && (
                     <div className={styles.oneshotAnswerContainer}>
                         <Answer
@@ -203,7 +228,6 @@ export function Component(): JSX.Element {
                     autoAdjustHeight
                     onChange={onPromptTemplateChange}
                 />
-
                 <SpinButton
                     className={styles.oneshotSettingsSeparator}
                     label="Retrieve this many search results:"
@@ -226,35 +250,42 @@ export function Component(): JSX.Element {
                     onChange={onUseSemanticCaptionsChange}
                     disabled={!useSemanticRanker}
                 />
+
+                {showGPT4VOptions && (
+                    <GPT4VSettings
+                        gpt4vInputs={gpt4vInput}
+                        isUseGPT4V={useGPT4V}
+                        updateUseGPT4V={useGPT4V => {
+                            setUseGPT4V(useGPT4V);
+                        }}
+                        updateGPT4VInputs={inputs => setGPT4VInput(inputs)}
+                    />
+                )}
+
+                <VectorSettings
+                    showImageOptions={useGPT4V && showGPT4VOptions}
+                    updateVectorFields={(options: VectorFieldOptions[]) => setVectorFieldList(options)}
+                    updateRetrievalMode={(retrievalMode: RetrievalMode) => setRetrievalMode(retrievalMode)}
+                />
+
                 {useLogin && (
                     <Checkbox
                         className={styles.oneshotSettingsSeparator}
-                        checked={useOidSecurityFilter}
+                        checked={useOidSecurityFilter || requireAccessControl}
                         label="Use oid security filter"
-                        disabled={!client?.getActiveAccount()}
+                        disabled={!isLoggedIn(client) || requireAccessControl}
                         onChange={onUseOidSecurityFilterChange}
                     />
                 )}
                 {useLogin && (
                     <Checkbox
                         className={styles.oneshotSettingsSeparator}
-                        checked={useGroupsSecurityFilter}
+                        checked={useGroupsSecurityFilter || requireAccessControl}
                         label="Use groups security filter"
-                        disabled={!client?.getActiveAccount()}
+                        disabled={!isLoggedIn(client) || requireAccessControl}
                         onChange={onUseGroupsSecurityFilterChange}
                     />
                 )}
-                <Dropdown
-                    className={styles.oneshotSettingsSeparator}
-                    label="Retrieval mode"
-                    options={[
-                        { key: "hybrid", text: "Vectors + Text (Hybrid)", selected: retrievalMode == RetrievalMode.Hybrid, data: RetrievalMode.Hybrid },
-                        { key: "vectors", text: "Vectors", selected: retrievalMode == RetrievalMode.Vectors, data: RetrievalMode.Vectors },
-                        { key: "text", text: "Text", selected: retrievalMode == RetrievalMode.Text, data: RetrievalMode.Text }
-                    ]}
-                    required
-                    onChange={onRetrievalModeChange}
-                />
                 {useLogin && <TokenClaimsDisplay />}
             </Panel>
         </div>
