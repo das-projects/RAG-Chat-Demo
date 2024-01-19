@@ -1,71 +1,39 @@
 from typing import Any, Coroutine, Literal, Optional, Union, overload
 
+from approaches.approach import ThoughtStep
+from approaches.chatapproach import ChatApproach
 from azure.search.documents.aio import SearchClient
 from azure.search.documents.models import VectorQuery
+from core.authentication import AuthenticationHelper
+from core.modelhelper import get_token_limit
 from openai import AsyncOpenAI, AsyncStream
 from openai.types.chat import (
     ChatCompletion,
     ChatCompletionChunk,
 )
 
-from approaches.approach import ThoughtStep
-from approaches.chatapproach import ChatApproach
-from core.authentication import AuthenticationHelper
-from core.modelhelper import get_token_limit
-
 
 class ChatReadRetrieveReadApproach(ChatApproach):
-
     """
     A multi-step approach that first uses OpenAI to turn the user's question into a search query,
     then uses Azure AI Search to retrieve relevant documents, and then sends the conversation history,
     original user question, and search results to OpenAI to generate a response.
     """
-    system_message_chat_conversation = """Assistant helps the company employees with their healthcare plan questions, and questions about the employee handbook. Be brief in your answers.
-Answer ONLY with the facts listed in the list of sources below. If there isn't enough information below, say you don't know. Do not generate answers that don't use the sources below. If asking a clarifying question to the user would help, ask the question.
-For tabular information return it as an html table. Do not return markdown format. If the question is not in English, answer in the language used in the question.
-Each source has a name followed by colon and the actual information, always include the source name for each fact you use in the response. Use square brackets to reference the source, for example [info1.txt]. Don't combine sources, list each source separately, for example [info1.txt][info2.pdf].
-{follow_up_questions_prompt}
-{injected_prompt}
-"""
-    follow_up_questions_prompt_content = """Generate 3 very brief follow-up questions that the user would likely ask next.
-Enclose the follow-up questions in double angle brackets. Example:
-<<Are there exclusions for prescriptions?>>
-<<Which pharmacies can be ordered from?>>
-<<What is the limit for over-the-counter medication?>>
-Do no repeat questions that have already been asked.
-Make sure the last question ends with ">>"."""
-
-    query_prompt_template = """Below is a history of the conversation so far, and a new question asked by the user that needs to be answered by searching in a knowledge base about employee healthcare plans and the employee handbook.
-You have access to an Azure AI Search index with 100's of documents.
-Generate a search query based on the conversation and the new question.
-Do not include cited source filenames and document names e.g info.txt or doc.pdf in the search query terms.
-Do not include any text inside [] or <<>> in the search query terms.
-Do not include any special characters like '+'.
-If the question is not in English, translate the question to English before generating the search query.
-If you cannot generate a search query, return just the number 0.
-"""
-    query_prompt_few_shots = [
-        {"role": USER, "content": "What are my health plans?"},
-        {"role": ASSISTANT, "content": "Show available health plans"},
-        {"role": USER, "content": "does my plan cover cardio?"},
-        {"role": ASSISTANT, "content": "Health plan cardio coverage"},
-    ]
 
     def __init__(
-        self,
-        *,
-        search_client: SearchClient,
-        auth_helper: AuthenticationHelper,
-        openai_client: AsyncOpenAI,
-        chatgpt_model: str,
-        chatgpt_deployment: Optional[str],  # Not needed for non-Azure OpenAI
-        embedding_deployment: Optional[str],  # Not needed for non-Azure OpenAI or for retrieval_mode="text"
-        embedding_model: str,
-        sourcepage_field: str,
-        content_field: str,
-        query_language: str,
-        query_speller: str,
+            self,
+            *,
+            search_client: SearchClient,
+            auth_helper: AuthenticationHelper,
+            openai_client: AsyncOpenAI,
+            chatgpt_model: str,
+            chatgpt_deployment: Optional[str],  # Not needed for non-Azure OpenAI
+            embedding_deployment: Optional[str],  # Not needed for non-Azure OpenAI or for retrieval_mode="text"
+            embedding_model: str,
+            sourcepage_field: str,
+            content_field: str,
+            query_language: str,
+            query_speller: str,
     ):
         self.search_client = search_client
         self.openai_client = openai_client
@@ -82,40 +50,44 @@ If you cannot generate a search query, return just the number 0.
 
     @property
     def system_message_chat_conversation(self):
-        return """Assistant helps the company employees with their healthcare plan questions, and questions about the employee handbook. Be brief in your answers.
-        Answer ONLY with the facts listed in the list of sources below. If there isn't enough information below, say you don't know. Do not generate answers that don't use the sources below. If asking a clarifying question to the user would help, ask the question.
-        For tabular information return it as an html table. Do not return markdown format. If the question is not in English, answer in the language used in the question.
-        Each source has a name followed by colon and the actual information, always include the source name for each fact you use in the response. Use square brackets to reference the source, for example [info1.txt]. Don't combine sources, list each source separately, for example [info1.txt][info2.pdf].
+        return """Sie sind ein Nexible-Kundendienstassistent, der Nexible-Kunden bei Fragen zu Reiseversicherungen und Zahnzusatzversicherungen von Nexible hilft.
+        Bitte denken Sie darüber nach, ob die Frage des Nutzers unklar formuliert oder mehrdeutig ist, und bitten Sie den Nutzer, sie zu erläutern oder anders zu formulieren. 
+        Bitte geben Sie eine umfassende Antwort NUR mit den Fakten, nach sorgfältiger Prüfung der Liste der Quellen unten aufgeführt sind. Bitte halten Sie Ihre Antworten so kurz wie möglich.
+        Wenn Sie nicht sicher sind, ob die Antwort aus dem bereitgestellten Zitat stammt, geben Sie die Antwort nicht an. Generieren Sie keine Antworten, die nicht die folgenden Quellen verwenden. Wenn die Informationen unten nicht ausreichen, sagen Sie, dass Sie es nicht wissen, und bitten Sie um Kontaktaufnahme unter https://www.nexible.de/kontakt.
+        Für tabellarische Informationen geben Sie sie als HTML-Tabelle zurück. Geben Sie das Markdown-Format nicht zurück. 
+        Wenn die Frage nicht auf Deutsch ist, antworten Sie in der Sprache, die in der Frage verwendet wird.
+        Jede Quelle hat einen Namen, gefolgt von einem Doppelpunkt und der eigentlichen Information. Nenne bitte jederzeit die Quelle, die zur Generierung der Antwort verwendet wurde. Nutze dafür eckige Klammern, z.B. [broschuere.pdf]. 
+        Kombiniere niemals mehrere Quellen und zitiere Quellen immer separat , z.B. [zahn_broschuere.pdf][kfz_broschuere.pdf].
         {follow_up_questions_prompt}
         {injected_prompt}
         """
 
     @overload
     async def run_until_final_call(
-        self,
-        history: list[dict[str, str]],
-        overrides: dict[str, Any],
-        auth_claims: dict[str, Any],
-        should_stream: Literal[False],
+            self,
+            history: list[dict[str, str]],
+            overrides: dict[str, Any],
+            auth_claims: dict[str, Any],
+            should_stream: Literal[False],
     ) -> tuple[dict[str, Any], Coroutine[Any, Any, ChatCompletion]]:
         ...
 
     @overload
     async def run_until_final_call(
-        self,
-        history: list[dict[str, str]],
-        overrides: dict[str, Any],
-        auth_claims: dict[str, Any],
-        should_stream: Literal[True],
+            self,
+            history: list[dict[str, str]],
+            overrides: dict[str, Any],
+            auth_claims: dict[str, Any],
+            should_stream: Literal[True],
     ) -> tuple[dict[str, Any], Coroutine[Any, Any, AsyncStream[ChatCompletionChunk]]]:
         ...
 
     async def run_until_final_call(
-        self,
-        history: list[dict[str, str]],
-        overrides: dict[str, Any],
-        auth_claims: dict[str, Any],
-        should_stream: bool = False,
+            self,
+            history: list[dict[str, str]],
+            overrides: dict[str, Any],
+            auth_claims: dict[str, Any],
+            should_stream: bool = False,
     ) -> tuple[dict[str, Any], Coroutine[Any, Any, Union[ChatCompletion, AsyncStream[ChatCompletionChunk]]]]:
         has_text = overrides.get("retrieval_mode") in ["text", "hybrid", None]
         has_vector = overrides.get("retrieval_mode") in ["vectors", "hybrid", None]

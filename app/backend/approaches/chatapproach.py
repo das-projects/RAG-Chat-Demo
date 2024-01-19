@@ -21,30 +21,52 @@ class ChatApproach(Approach, ABC):
     ASSISTANT = "assistant"
 
     query_prompt_few_shots = [
-        {"role": USER, "content": "How did crypto do last year?"},
-        {"role": ASSISTANT, "content": "Summarize Cryptocurrency Market Dynamics from last year"},
-        {"role": USER, "content": "What are my health plans?"},
-        {"role": ASSISTANT, "content": "Show available health plans"},
+        {'role': USER, 'content': 'Wann greift mein Reiserückrittsschutz?'},
+        {'role': ASSISTANT,
+         'content': 'Die Nexible Reiserücktrittsversicherung bietet Versicherungsschutz wenn Sie oder eine Ihnen nahestehende Person oder Ihr Reisepartner vor der Reise erkranken und die Reise deshalb nicht antreten können. '},
+        {'role': USER, 'content': 'Ist eine professionelle Zahnreinigung in der Zahnzusatzversicherung abgedeckt?'},
+        {'role': ASSISTANT,
+         'content': 'Das hängt von ihren Tarif ab. Im Basic Tarif sind 60€ pro Jahr abgedeckt, in allen anderen Tarifen 100%.'},
+        {'role': USER, 'content': 'Kann ich bei nexible eine Hausatversicherung abschließen?'},
+        {'role': ASSISTANT,
+         'content': 'Nein, nexible bietet aber umfangreiche Produkte der Zahnzusatzversicherung und Reiseversicherung an.'},
+        {'role': USER, 'content': 'Wie kann ich einen Schaden melden?'},
+        {'role': ASSISTANT, 'content': 'Zu welchem Produkt möchten Sie einen Schaden melden?'},
+        {'role': USER, 'content': 'Zu meiner Reiserücktrittsversicherung'},
+        {'role': ASSISTANT,
+         'content': 'Ihren Schadenfalls können Sie ganz einfach online melden unter: https://www.nexible.de/schaden/reiseversicherung'},
+        {'role': USER, 'content': 'Wie kann ich meine Reiseversicherung abschließen oder berechnen?'},
+        {'role': ASSISTANT,
+         'content': 'Sie können Ihre Reiseversicherung ganz einfach online abschließen unter:  https://www.nexible.de/reiseversicherung/online-berechnen/anzahl_versicherter_personen'},
+        {'role': USER, 'content': 'Wie kann ich meine Kfz Schaden melden?'},
+        {'role': ASSISTANT,
+         'content': 'Ihren Schadenfalls können Sie ganz einfach online melden unter: https://www.nexible.de/schaden/autoversicherung/schadenmeldung'},
+        {'role': USER, 'content': 'Wie kann ich meine Schaden in der Reiseversicherung melden will?'},
+        {'role': ASSISTANT,
+         'content': 'Ihren Schadenfalls können Sie ganz einfach online melden unter: https://www.nexible.de/schaden/reiseversicherung'},
+        {'role': USER, 'content': 'Wie kann ich meine Leistungsfall in der Zahnversicherung geltend machen?'},
+        {'role': ASSISTANT,
+         'content': 'Ihren Leistungsfall können Sie ganz einfach online melden unter: https://www.nexible.de/kontakt'},
     ]
+
     NO_RESPONSE = "0"
 
-    follow_up_questions_prompt_content = """Generate 3 very brief follow-up questions that the user would likely ask next.
-    Enclose the follow-up questions in double angle brackets. Example:
-    <<Are there exclusions for prescriptions?>>
-    <<Which pharmacies can be ordered from?>>
-    <<What is the limit for over-the-counter medication?>>
-    Do no repeat questions that have already been asked.
-    Make sure the last question ends with ">>".
-    """
+    follow_up_questions_prompt_content = """Generieren Sie drei sehr kurze Folgefragen, die der Benutzer wahrscheinlich als nächstes zu Nexible-Versicherungsprodukten stellen würde. 
+    Verwenden Sie doppelte spitze Klammern, um auf die Fragen zu verweisen, z.B. 
+    <<Gibt es Ausschlüsse für Rezepte?>>
+    <<Wie kann ich meine Kfz Schaden melden?>>
+    <<Wann greift mein Reiserückrittsschutz?>>
+    Versuchen Sie, bereits gestellte Fragen nicht zu wiederholen.
+    Generieren Sie nur Fragen und generieren Sie keinen Text vor oder nach den Fragen, wie z. B. „Nächste Fragen“.
+    Stellen Sie sicher, dass die letzte Frage mit ">>" endet."""
 
-    query_prompt_template = """Below is a history of the conversation so far, and a new question asked by the user that needs to be answered by searching in a knowledge.
-    You have access to Azure AI Search index with 100's of documents.
-    Generate a search query based on the conversation and the new question.
-    Do not include cited source filenames and document names e.g info.txt or doc.pdf in the search query terms.
-    Do not include any text inside [] or <<>> in the search query terms.
-    Do not include any special characters like '+'.
-    If the question is not in English, translate the question to English before generating the search query.
-    If you cannot generate a search query, return just the number 0.
+    query_prompt_template = """Nachfolgend finden Sie eine Historie der bisherigen Konversation und eine neue Frage des Benutzers, die durch eine Suche in der Wissensdatenbank über Nexible Versicherungsprodukte beantwortet werden muss.
+    Generieren Sie eine Suchanfrage basierend auf der Konversation und der neuen Frage. Verwenden Sie die folgenden Regeln: 
+    Geben Sie keine zitierten Quelldateinamen und Dokumentnamen wie z. B. info.txt oder doc.pdf in die Suchbegriffe ein.
+    Fügen Sie keinen Text innerhalb von [] oder <<>> in die Suchabfragebegriffe ein.
+    Fügen Sie keine Sonderzeichen wie '+' ein.
+    Wenn die Frage nicht auf Deutsch ist, übersetzen Sie die Frage ins Deutsche, bevor Sie die Suchanfrage generieren.
+    Wenn Sie keine Suchabfrage generieren können, geben Sie nur die Zahl 0 zurück.
     """
 
     @property

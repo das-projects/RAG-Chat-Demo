@@ -53,7 +53,7 @@ ERROR_MESSAGE = """The app encountered an error processing your request.
 If you are an administrator of the app, view the full error in the logs. See aka.ms/appservice-logs for more information.
 Error type: {error_type}
 """
-ERROR_MESSAGE_FILTER = """Your message contains content that was flagged by the OpenAI content filter."""
+ERROR_MESSAGE_FILTER = """Your message contains content that was flagged by the ERGO Group content filter."""
 
 bp = Blueprint("routes", __name__, static_folder="static")
 # Fix Windows registry issue with mimetypes
