@@ -1,16 +1,18 @@
-from typing import Any, Coroutine, Literal, Optional, Union, overload
+from typing import Any, Coroutine, List, Literal, Optional, Union, overload
 
-from approaches.approach import ThoughtStep
-from approaches.chatapproach import ChatApproach
 from azure.search.documents.aio import SearchClient
 from azure.search.documents.models import VectorQuery
-from core.authentication import AuthenticationHelper
-from core.modelhelper import get_token_limit
 from openai import AsyncOpenAI, AsyncStream
 from openai.types.chat import (
     ChatCompletion,
     ChatCompletionChunk,
+    ChatCompletionToolParam,
 )
+
+from approaches.approach import ThoughtStep
+from approaches.chatapproach import ChatApproach
+from core.authentication import AuthenticationHelper
+from core.modelhelper import get_token_limit
 
 
 class ChatReadRetrieveReadApproach(ChatApproach):
@@ -21,19 +23,19 @@ class ChatReadRetrieveReadApproach(ChatApproach):
     """
 
     def __init__(
-            self,
-            *,
-            search_client: SearchClient,
-            auth_helper: AuthenticationHelper,
-            openai_client: AsyncOpenAI,
-            chatgpt_model: str,
-            chatgpt_deployment: Optional[str],  # Not needed for non-Azure OpenAI
-            embedding_deployment: Optional[str],  # Not needed for non-Azure OpenAI or for retrieval_mode="text"
-            embedding_model: str,
-            sourcepage_field: str,
-            content_field: str,
-            query_language: str,
-            query_speller: str,
+        self,
+        *,
+        search_client: SearchClient,
+        auth_helper: AuthenticationHelper,
+        openai_client: AsyncOpenAI,
+        chatgpt_model: str,
+        chatgpt_deployment: Optional[str],  # Not needed for non-Azure OpenAI
+        embedding_deployment: Optional[str],  # Not needed for non-Azure OpenAI or for retrieval_mode="text"
+        embedding_model: str,
+        sourcepage_field: str,
+        content_field: str,
+        query_language: str,
+        query_speller: str,
     ):
         self.search_client = search_client
         self.openai_client = openai_client
@@ -64,30 +66,28 @@ class ChatReadRetrieveReadApproach(ChatApproach):
 
     @overload
     async def run_until_final_call(
-            self,
-            history: list[dict[str, str]],
-            overrides: dict[str, Any],
-            auth_claims: dict[str, Any],
-            should_stream: Literal[False],
-    ) -> tuple[dict[str, Any], Coroutine[Any, Any, ChatCompletion]]:
-        ...
+        self,
+        history: list[dict[str, str]],
+        overrides: dict[str, Any],
+        auth_claims: dict[str, Any],
+        should_stream: Literal[False],
+    ) -> tuple[dict[str, Any], Coroutine[Any, Any, ChatCompletion]]: ...
 
     @overload
     async def run_until_final_call(
-            self,
-            history: list[dict[str, str]],
-            overrides: dict[str, Any],
-            auth_claims: dict[str, Any],
-            should_stream: Literal[True],
-    ) -> tuple[dict[str, Any], Coroutine[Any, Any, AsyncStream[ChatCompletionChunk]]]:
-        ...
+        self,
+        history: list[dict[str, str]],
+        overrides: dict[str, Any],
+        auth_claims: dict[str, Any],
+        should_stream: Literal[True],
+    ) -> tuple[dict[str, Any], Coroutine[Any, Any, AsyncStream[ChatCompletionChunk]]]: ...
 
     async def run_until_final_call(
-            self,
-            history: list[dict[str, str]],
-            overrides: dict[str, Any],
-            auth_claims: dict[str, Any],
-            should_stream: bool = False,
+        self,
+        history: list[dict[str, str]],
+        overrides: dict[str, Any],
+        auth_claims: dict[str, Any],
+        should_stream: bool = False,
     ) -> tuple[dict[str, Any], Coroutine[Any, Any, Union[ChatCompletion, AsyncStream[ChatCompletionChunk]]]]:
         has_text = overrides.get("retrieval_mode") in ["text", "hybrid", None]
         has_vector = overrides.get("retrieval_mode") in ["vectors", "hybrid", None]
@@ -99,19 +99,22 @@ class ChatReadRetrieveReadApproach(ChatApproach):
         original_user_query = history[-1]["content"]
         user_query_request = "Generate search query for: " + original_user_query
 
-        functions = [
+        tools: List[ChatCompletionToolParam] = [
             {
-                "name": "search_sources",
-                "description": "Retrieve sources from the Azure AI Search index",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "search_query": {
-                            "type": "string",
-                            "description": "Query string to retrieve documents from azure search eg: 'Health care plan'",
-                        }
+                "type": "function",
+                "function": {
+                    "name": "search_sources",
+                    "description": "Retrieve sources from the Azure AI Search index",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "search_query": {
+                                "type": "string",
+                                "description": "Query string to retrieve documents from azure search eg: 'Health care plan'",
+                            }
+                        },
+                        "required": ["search_query"],
                     },
-                    "required": ["search_query"],
                 },
             }
         ]
@@ -133,8 +136,8 @@ class ChatReadRetrieveReadApproach(ChatApproach):
             temperature=0.0,
             max_tokens=100,  # Setting too low risks malformed JSON, setting too high may affect performance
             n=1,
-            functions=functions,
-            function_call="auto",
+            tools=tools,
+            tool_choice="auto",
         )
 
         query_text = self.get_search_query(chat_completion, original_user_query)
@@ -172,7 +175,6 @@ class ChatReadRetrieveReadApproach(ChatApproach):
             # Model does not handle lengthy system messages well. Moving sources to latest user conversation to solve follow up questions prompt.
             user_content=original_user_query + "\n\nSources:\n" + content,
             max_tokens=messages_token_limit,
-            few_shots=self.query_prompt_few_shots,
         )
 
         data_points = {"text": sources_content}
