@@ -41,12 +41,24 @@ class ChatApproach(Approach, ABC):
         {'role': USER, 'content': 'Wie kann ich meine Kfz Schaden melden?'},
         {'role': ASSISTANT,
          'content': 'Ihren Schadenfalls können Sie ganz einfach online melden unter: https://www.nexible.de/schaden/autoversicherung/schadenmeldung'},
-        {'role': USER, 'content': 'Wie kann ich meine Schaden in der Reiseversicherung melden will?'},
+        {'role': USER, 'content': 'welche Leistungen sind in einer Reiseversicherung abgedeckt'},
         {'role': ASSISTANT,
-         'content': 'Ihren Schadenfalls können Sie ganz einfach online melden unter: https://www.nexible.de/schaden/reiseversicherung'},
-        {'role': USER, 'content': 'Wie kann ich meine Leistungsfall in der Zahnversicherung geltend machen?'},
+         'content': """Eine Reiseversicherung kann verschiedene Leistungen abdecken, die je nach Versicherungspaket und Tarif variieren können. Zu den möglichen Leistungen einer Reiseversicherung gehören:
+                        - Reiseabbruchversicherung: Erstattung der Kosten für nicht genutzte Reiseleistungen, wenn die Reise vorzeitig abgebrochen wird.
+                        - Reisekrankenversicherung: Übernahme der Kosten für medizinisch notwendige Behandlungen und Operationen im Ausland, einschließlich Schwangerschaft und Zahnbehandlungen.
+                        - Reisegepäckversicherung: Erstattung bei Verlust, Diebstahl oder Beschädigung des Reisegepäcks, einschließlich notwendiger Ersatzkäufe.
+                        - Reiseunfallversicherung: Auszahlung einer Versicherungssumme bei Unfall oder Invalidität während der Reise.
+                        - Reisehaftpflichtversicherung: Schutz vor Schadenersatzansprüchen Dritter während der Reise.
+                       Es ist wichtig, die Versicherungsbedingungen und Konditionen der jeweiligen Reiseversicherung zu überprüfen, um herauszufinden, welche Leistungen genau abgedeckt sind."""},
+        {'role': USER, 'content': 'was in der Reiserücktritt versichert ist und was nicht?'},
         {'role': ASSISTANT,
-         'content': 'Ihren Leistungsfall können Sie ganz einfach online melden unter: https://www.nexible.de/kontakt'},
+         'content': """
+            Der Reiserücktrittsschutz einer Reiseversicherung deckt in der Regel folgende Fälle ab:
+            - Erstattung der Stornokosten, wenn Sie oder eine Ihnen nahestehende Person vor der Reise erkranken und die Reise deshalb nicht antreten können
+            - Erstattung der Stornokosten, wenn Sie oder eine Ihnen nahestehende Person aufgrund unerwarteter Ereignisse wie Schwangerschaft, Schaden am Eigentum oder Kurzarbeit die Reise nicht antreten können
+            - Erstattung der Stornokosten, wenn Sie die Veranstaltung, für die Sie eine Eintrittskarte erworben haben, nicht besuchen können 
+            - Erstattung der Kosten für ein Mietfahrzeug in vergleichbarer Klasse, wenn das ursprünglich genutzte Fahrzeug aufgrund eines Unfalls oder einer Panne nicht mehr fahrtauglich ist
+            Es ist wichtig, die Versicherungsbedingungen zu prüfen, um die genauen Leistungen und Ausschlüsse des gewählten Reiserücktrittsschutzes zu erfahren"""},
     ]
 
     NO_RESPONSE = "0"
