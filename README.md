@@ -8,7 +8,6 @@
 - [Azure deployment](#azure-deployment)
   - [Cost estimation](#cost-estimation)
   - [Project setup](#project-setup)
-    - [VS Code Dev Containers](#vs-code-dev-containers)
     - [Local environment](#local-environment)
   - [Deploying from scratch](#deploying-from-scratch)
   - [Deploying with existing Azure resources](#deploying-with-existing-azure-resources)
