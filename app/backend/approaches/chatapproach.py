@@ -10,8 +10,8 @@ from openai.types.chat import (
     ChatCompletionMessageParam,
 )
 
-from ..approaches.approach import Approach
-from ..core.messagebuilder import MessageBuilder
+from approaches.approach import Approach
+from core.messagebuilder import MessageBuilder
 
 
 class ChatApproach(Approach, ABC):

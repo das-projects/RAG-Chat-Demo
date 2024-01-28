@@ -5,9 +5,9 @@ from azure.search.documents.aio import SearchClient
 from azure.search.documents.models import VectorQuery
 from openai import AsyncOpenAI
 
-from ..approaches.approach import Approach, ThoughtStep
-from ..core.authentication import AuthenticationHelper
-from ..core.messagebuilder import MessageBuilder
+from approaches.approach import Approach, ThoughtStep
+from core.authentication import AuthenticationHelper
+from core.messagebuilder import MessageBuilder
 
 # Replace these with your own values, either in environment variables or directly here
 AZURE_STORAGE_ACCOUNT = os.getenv("AZURE_STORAGE_ACCOUNT")

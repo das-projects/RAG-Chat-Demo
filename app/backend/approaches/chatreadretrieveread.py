@@ -9,10 +9,10 @@ from openai.types.chat import (
     ChatCompletionToolParam,
 )
 
-from ..approaches.approach import ThoughtStep
-from ..approaches.chatapproach import ChatApproach
-from ..core.authentication import AuthenticationHelper
-from ..core.modelhelper import get_token_limit
+from approaches.approach import ThoughtStep
+from approaches.chatapproach import ChatApproach
+from core.authentication import AuthenticationHelper
+from core.modelhelper import get_token_limit
 
 
 class ChatReadRetrieveReadApproach(ChatApproach):
