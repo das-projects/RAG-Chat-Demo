@@ -271,10 +271,11 @@ const Chat = () => {
                     {!lastQuestionRef.current ? (
                         <div className={styles.chatEmptyState}>
                             <img
-                                src=nexible
+                                src={nexible}
                                 alt="Nexible Logo"
                                 width="300px"
                                 height="127px"
+                                className={styles.loadingLogo}
                             />
                         </div>
                     ) : (
