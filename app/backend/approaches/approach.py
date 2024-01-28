@@ -12,8 +12,8 @@ from azure.search.documents.models import (
 )
 from openai import AsyncOpenAI
 
-from core.authentication import AuthenticationHelper
-from text import nonewlines
+from ..core.authentication import AuthenticationHelper
+from ..text import nonewlines
 
 
 @dataclass
