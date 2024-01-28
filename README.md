@@ -34,7 +34,7 @@ Just provide your own sample data, and you can have a fully deployed ChatBot wit
 * Settings directly in the UX to tweak the behavior and experiment with options
 * Performance tracing and monitoring with Application Insights
 
-![Chat screen](docs/chatscreen.png)
+![Chat screen](docs/ChatBotCapture.PNG)
 
 ## Azure account requirements
 
