@@ -92,7 +92,7 @@ Execute the following command, if you don't have any pre-existing Azure services
 1. After the application has been successfully deployed you will see a URL printed to the console.  Click that URL to interact with the application in your browser.
 It will look like the following:
 
-!['Output from running azd up'](assets/endpoint.png)
+!['Output from running azd up'](docs/endpoint.png)
 
 ### Deploying with existing Azure resources
 
