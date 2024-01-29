@@ -1,25 +1,6 @@
 
 # Nexible ChatBot
 
-## Table of Contents
-
-- [Features](#features)
-- [Azure account requirements](#azure-account-requirements)
-- [Azure deployment](#azure-deployment)
-  - [Cost estimation](#cost-estimation)
-  - [Project setup](#project-setup)
-    - [Local environment](#local-environment)
-  - [Deploying from scratch](#deploying-from-scratch)
-  - [Deploying with existing Azure resources](#deploying-with-existing-azure-resources)
-  - [Deploying again](#deploying-again)
-- [Enabling optional features](#enabling-optional-features)
-  - [Enabling authentication](#enabling-authentication)
-  - [Enabling login and document level access control](#enabling-login-and-document-level-access-control)
-- [Using the app](#using-the-app)
-- [Running locally](#running-locally)
-- [Monitoring with Application Insights](#monitoring-with-application-insights)
-- [Customizing the UI and data](#customizing-the-ui-and-data)
-
 This app demonstrates a few approaches for creating ChatGPT-like experiences over your own data using the Retrieval Augmented Generation pattern. It uses Azure OpenAI Service to access the ChatGPT model (gpt-35-turbo), and Azure AI Search for data indexing and retrieval.
 
 Just provide your own sample data, and you can have a fully deployed ChatBot with just one command! 
