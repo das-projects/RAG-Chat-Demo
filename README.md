@@ -94,7 +94,7 @@ If you've changed the infrastructure files (`infra` folder or `azure.yaml`), the
 
 ```azd up```
 
-## Enabling optional features
+## Future Experimental Features
 
 ### Enabling GPT-4 Turbo with Vision
 
