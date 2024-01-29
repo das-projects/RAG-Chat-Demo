@@ -24,7 +24,7 @@ This app demonstrates a few approaches for creating ChatGPT-like experiences ove
 
 Just provide your own sample data, and you can have a fully deployed ChatBot with just one command! 
 
-![RAG Architecture](docs/appcomponents.png)
+![RAG Architecture](docs/appcomponents.PNG)
 
 ## Features
 
