@@ -27,7 +27,7 @@ import { useLogin, getToken, isLoggedIn, requireAccessControl } from "../../auth
 import { VectorSettings } from "../../components/VectorSettings";
 import { useMsal } from "@azure/msal-react";
 import { TokenClaimsDisplay } from "../../components/TokenClaimsDisplay";
-import nexible from "../../assets/nexible_logo.svg";
+import ergo_logo from "../../assets/ergo_logo.svg";
 import { GPT4VSettings } from "../../components/GPT4VSettings";
 
 const Chat = () => {
@@ -271,8 +271,8 @@ const Chat = () => {
                     {!lastQuestionRef.current ? (
                         <div className={styles.chatEmptyState}>
                             <img
-                                src={nexible}
-                                alt="Nexible Logo"
+                                src={ergo_logo}
+                                alt="ERGO Logo"
                                 width="300px"
                                 height="127px"
                                 className={styles.loadingLogo}
@@ -341,7 +341,7 @@ const Chat = () => {
                     <div className={styles.chatInput}>
                         <QuestionInput
                             clearOnSend
-                            placeholder="Geben Sie hier Ihre Frage zu einem Nexible Produkt ein..."
+                            placeholder="Geben Sie hier Ihre Frage ..."
                             disabled={isLoading}
                             onSend={question => makeApiRequest(question)}
                         />

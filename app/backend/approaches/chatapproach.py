@@ -21,45 +21,27 @@ class ChatApproach(Approach, ABC):
     ASSISTANT = "assistant"
 
     query_prompt_few_shots = [
-        {'role': USER, 'content': 'Wann greift mein Reiserückrittsschutz?'},
+        {'role': USER, 'content': 'Wie können Sie das User Service Center erreichen?'},
         {'role': ASSISTANT,
-         'content': 'Die Nexible Reiserücktrittsversicherung bietet Versicherungsschutz wenn Sie oder eine Ihnen nahestehende Person oder Ihr Reisepartner vor der Reise erkranken und die Reise deshalb nicht antreten können. '},
-        {'role': USER, 'content': 'Ist eine professionelle Zahnreinigung in der Zahnzusatzversicherung abgedeckt?'},
+         'content': 'Sie erreichen das User Service Center von ITERGO telefonisch von Montag bis Freitag zwischen 06:30 und 18:00 Uhr. Außerhalb der Servicezeiten können Sie das User Service Center per E-Mail erreichen. Bitte verwenden Sie das folgende Formular.'},
+        {'role': USER, 'content': 'Welche Hinweise sollte ich beachten?'},
         {'role': ASSISTANT,
-         'content': 'Das hängt von ihren Tarif ab. Im Basic Tarif sind 60€ pro Jahr abgedeckt, in allen anderen Tarifen 100%.'},
-        {'role': USER, 'content': 'Kann ich bei nexible eine Hausatversicherung abschließen?'},
+         'content': 'Bevor Sie das ITERGO User Service Center anrufen, beachten Sie bitte die Checkliste. Sie können auch einen ENEO Systemreport erstellen und diesen unter Angabe der Ticketnummer an die Hotline (benutzerservice@itergo.com) senden.'},
+        {'role': USER, 'content': 'Wie erreichen Sie das User Service Center?'},
         {'role': ASSISTANT,
-         'content': 'Nein, nexible bietet aber umfangreiche Produkte der Zahnzusatzversicherung und Reiseversicherung an.'},
-        {'role': USER, 'content': 'Wie kann ich einen Schaden melden?'},
-        {'role': ASSISTANT, 'content': 'Zu welchem Produkt möchten Sie einen Schaden melden?'},
-        {'role': USER, 'content': 'Zu meiner Reiserücktrittsversicherung'},
+         'content': 'per e-mail benutzerservice@itergo.com Alle Hauptstandorte 2000 Aussendienst 0800 246 2000 Englische Hotline +49 211 477 7444'},
+        {'role': USER, 'content': 'Sie sind mit der Lösung des Tickets nicht zufrieden ?'},
+        {'role': ASSISTANT, 'content': 'Wenn Sie mit der Lösung Ihres Tickets nicht zufrieden sind, können Sie es innerhalb von 7 Tagen über die Wiedereröffnungsfunktion in MyIT odertelefonisch über das IT User Service Center selbst wiedereröffnen lassen. Sie können uns auch per E-Mail erreichen: Beschwerdemanagement@itergo.com Neu ist, dass Ihr Ticket automatisch mit einer höheren Priorität bearbeitet wird.'},
+        {'role': USER, 'content': 'Wo finde ich Tipps und Tricks zur Einrichtung der Hardware?'},
         {'role': ASSISTANT,
-         'content': 'Ihren Schadenfalls können Sie ganz einfach online melden unter: https://www.nexible.de/schaden/reiseversicherung'},
-        {'role': USER, 'content': 'Wie kann ich meine Reiseversicherung abschließen oder berechnen?'},
+         'content': 'Auf der Startseite der IT-Supportseite finden Sie verschiedene Anleitungen zu unterschiedlichen Kategorien. Hier finde Sie auch die  "Anleitung zur Nutzung im mobilen Arbeiten" und "Anleitung zur Nutzung im Büro".'},
+        {'role': USER, 'content': 'Wie kann ich über VPN-Verbindung einen Zugriff auf Firmennetz herstellen?'},
         {'role': ASSISTANT,
-         'content': 'Sie können Ihre Reiseversicherung ganz einfach online abschließen unter:  https://www.nexible.de/reiseversicherung/online-berechnen/anzahl_versicherter_personen'},
-        {'role': USER, 'content': 'Wie kann ich meine Kfz Schaden melden?'},
+         'content': 'Auf der Startseite finden Sie ein Erklärvideo  unter  "VPN (Virtuell Private Network) verbinden".'},
+        {'role': USER, 'content': 'Warum wird im Homeoffice mein W-Lan nicht gefunden?'},
         {'role': ASSISTANT,
-         'content': 'Ihren Schadenfalls können Sie ganz einfach online melden unter: https://www.nexible.de/schaden/autoversicherung/schadenmeldung'},
-        {'role': USER, 'content': 'welche Leistungen sind in einer Reiseversicherung abgedeckt'},
-        {'role': ASSISTANT,
-         'content': """Eine Reiseversicherung kann verschiedene Leistungen abdecken, die je nach Versicherungspaket und Tarif variieren können. Zu den möglichen Leistungen einer Reiseversicherung gehören:
-                        - Reiseabbruchversicherung: Erstattung der Kosten für nicht genutzte Reiseleistungen, wenn die Reise vorzeitig abgebrochen wird.
-                        - Reisekrankenversicherung: Übernahme der Kosten für medizinisch notwendige Behandlungen und Operationen im Ausland, einschließlich Schwangerschaft und Zahnbehandlungen.
-                        - Reisegepäckversicherung: Erstattung bei Verlust, Diebstahl oder Beschädigung des Reisegepäcks, einschließlich notwendiger Ersatzkäufe.
-                        - Reiseunfallversicherung: Auszahlung einer Versicherungssumme bei Unfall oder Invalidität während der Reise.
-                        - Reisehaftpflichtversicherung: Schutz vor Schadenersatzansprüchen Dritter während der Reise.
-                       Es ist wichtig, die Versicherungsbedingungen und Konditionen der jeweiligen Reiseversicherung zu überprüfen, um herauszufinden, welche Leistungen genau abgedeckt sind."""},
-        {'role': USER, 'content': 'was in der Reiserücktritt versichert ist und was nicht?'},
-        {'role': ASSISTANT,
-         'content': """
-            Der Reiserücktrittsschutz einer Reiseversicherung deckt in der Regel folgende Fälle ab:
-            - Erstattung der Stornokosten, wenn Sie oder eine Ihnen nahestehende Person vor der Reise erkranken und die Reise deshalb nicht antreten können
-            - Erstattung der Stornokosten, wenn Sie oder eine Ihnen nahestehende Person aufgrund unerwarteter Ereignisse wie Schwangerschaft, Schaden am Eigentum oder Kurzarbeit die Reise nicht antreten können
-            - Erstattung der Stornokosten, wenn Sie die Veranstaltung, für die Sie eine Eintrittskarte erworben haben, nicht besuchen können 
-            - Erstattung der Kosten für ein Mietfahrzeug in vergleichbarer Klasse, wenn das ursprünglich genutzte Fahrzeug aufgrund eines Unfalls oder einer Panne nicht mehr fahrtauglich ist
-            Es ist wichtig, die Versicherungsbedingungen zu prüfen, um die genauen Leistungen und Ausschlüsse des gewählten Reiserücktrittsschutzes zu erfahren"""},
-    ]
+         'content': 'Die Ursachen können Vielfältig sein. Es gibt ein Erklärvideo zu Einrichtung des Internets unter  "Internetverbindung einrichten".'},
+   ]
 
     NO_RESPONSE = "0"
 
