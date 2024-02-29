@@ -60,7 +60,6 @@ class ChatApproach(Approach, ABC):
             - Erstattung der Kosten für ein Mietfahrzeug in vergleichbarer Klasse, wenn das ursprünglich genutzte Fahrzeug aufgrund eines Unfalls oder einer Panne nicht mehr fahrtauglich ist
             Es ist wichtig, die Versicherungsbedingungen zu prüfen, um die genauen Leistungen und Ausschlüsse des gewählten Reiserücktrittsschutzes zu erfahren"""},
     ]
-
     NO_RESPONSE = "0"
 
     follow_up_questions_prompt_content = """Generieren Sie drei sehr kurze Folgefragen, die der Benutzer wahrscheinlich als nächstes zu Nexible-Versicherungsprodukten stellen würde. 
@@ -141,13 +140,16 @@ class ChatApproach(Approach, ABC):
         append_index = len(few_shots) + 1
 
         message_builder.insert_message(self.USER, user_content, index=append_index)
-        total_token_count = message_builder.count_tokens_for_message(dict(message_builder.messages[-1]))  # type: ignore
+
+        total_token_count = 0
+        for existing_message in message_builder.messages:
+            total_token_count += message_builder.count_tokens_for_message(existing_message)
 
         newest_to_oldest = list(reversed(history[:-1]))
         for message in newest_to_oldest:
             potential_message_count = message_builder.count_tokens_for_message(message)
             if (total_token_count + potential_message_count) > max_tokens:
-                logging.debug("Reached max tokens of %d, history will be truncated", max_tokens)
+                logging.info("Reached max tokens of %d, history will be truncated", max_tokens)
                 break
             message_builder.insert_message(message["role"], message["content"], index=append_index)
             total_token_count += potential_message_count
