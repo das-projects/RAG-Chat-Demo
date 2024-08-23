@@ -5,6 +5,7 @@ export const toolTipText = {
         "Overrides the prompt used to generate the answer based on the question and search results. To append to existing prompt instead of replace whole prompt, start your prompt with '>>>'.",
     temperature:
         "Sets the temperature of the request to the LLM that generates the answer. Higher temperatures result in more creative responses, but they may be less grounded.",
+    seed: "Sets a seed to improve the reproducibility of the model's responses. The seed can be any integer.",
     searchScore:
         "Sets a minimum score for search results coming back from Azure AI search. The score range depends on whether you're using hybrid (default), vectors only, or text only.",
     rerankerScore:
@@ -20,7 +21,7 @@ export const toolTipText = {
     vectorFields:
         "Specifies which embedding fields in the Azure AI Search Index will be searched, both the 'Images and text' embeddings, 'Images' only, or 'Text' only.",
     gpt4VisionInputs:
-        "Sets what will be send to the vision model. 'Images and text' sends both images and text to the model, 'Images' sends only images, and 'Text' sends only text.",
+        "Sets what will be sent to the vision model. 'Images and text' sends both images and text to the model, 'Images' sends only images, and 'Text' sends only text.",
     retrievalMode:
         "Sets the retrieval mode for the Azure AI Search query. `Vectors + Text (Hybrid)` uses a combination of vector search and full text search, `Vectors` uses only vector search, and `Text` uses only full text search. Hybrid is generally optimal.",
     streamChat: "Continuously streams the response to the chat UI as it is generated.",
