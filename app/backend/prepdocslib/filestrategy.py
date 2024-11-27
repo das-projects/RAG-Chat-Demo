@@ -8,7 +8,7 @@ from .listfilestrategy import File, ListFileStrategy
 from .searchmanager import SearchManager, Section
 from .strategy import DocumentAction, SearchInfo, Strategy
 
-logger = logging.getLogger("ingester")
+logger = logging.getLogger("scripts")
 
 
 async def parse_file(
@@ -17,7 +17,7 @@ async def parse_file(
     category: Optional[str] = None,
     image_embeddings: Optional[ImageEmbeddings] = None,
 ) -> List[Section]:
-    key = file.file_extension()
+    key = file.file_extension().lower()
     processor = file_processors.get(key)
     if processor is None:
         logger.info("Skipping '%s', no parser found.", file.filename())

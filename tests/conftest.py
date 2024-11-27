@@ -314,7 +314,7 @@ def mock_env(monkeypatch, request):
         if os.getenv("AZURE_USE_AUTHENTICATION") is not None:
             monkeypatch.delenv("AZURE_USE_AUTHENTICATION")
 
-        with mock.patch("app.DefaultAzureCredential") as mock_default_azure_credential:
+        with mock.patch("app.AzureDeveloperCliCredential") as mock_default_azure_credential:
             mock_default_azure_credential.return_value = MockAzureCredential()
             yield
 
@@ -383,7 +383,7 @@ async def auth_client(
     for key, value in request.param.items():
         monkeypatch.setenv(key, value)
 
-    with mock.patch("app.DefaultAzureCredential") as mock_default_azure_credential:
+    with mock.patch("app.AzureDeveloperCliCredential") as mock_default_azure_credential:
         mock_default_azure_credential.return_value = MockAzureCredential()
         quart_app = app.create_app()
 
@@ -419,10 +419,15 @@ async def auth_public_documents_client(
     monkeypatch.setenv("USE_LOCAL_PDF_PARSER", "true")
     monkeypatch.setenv("USE_LOCAL_HTML_PARSER", "true")
     monkeypatch.setenv("AZURE_DOCUMENTINTELLIGENCE_SERVICE", "test-documentintelligence-service")
+    monkeypatch.setenv("USE_CHAT_HISTORY_COSMOS", "true")
+    monkeypatch.setenv("AZURE_COSMOSDB_ACCOUNT", "test-cosmosdb-account")
+    monkeypatch.setenv("AZURE_CHAT_HISTORY_DATABASE", "test-cosmosdb-database")
+    monkeypatch.setenv("AZURE_CHAT_HISTORY_CONTAINER", "test-cosmosdb-container")
+
     for key, value in request.param.items():
         monkeypatch.setenv(key, value)
 
-    with mock.patch("app.DefaultAzureCredential") as mock_default_azure_credential:
+    with mock.patch("app.AzureDeveloperCliCredential") as mock_default_azure_credential:
         mock_default_azure_credential.return_value = MockAzureCredential()
         quart_app = app.create_app()
 

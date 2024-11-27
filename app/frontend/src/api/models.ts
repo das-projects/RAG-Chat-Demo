@@ -20,6 +20,7 @@ export type ChatAppRequestOverrides = {
     retrieval_mode?: RetrievalMode;
     semantic_ranker?: boolean;
     semantic_captions?: boolean;
+    include_category?: string;
     exclude_category?: string;
     seed?: number;
     top?: number;
@@ -89,6 +90,8 @@ export type Config = {
     showSpeechInput: boolean;
     showSpeechOutputBrowser: boolean;
     showSpeechOutputAzure: boolean;
+    showChatHistoryBrowser: boolean;
+    showChatHistoryCosmos: boolean;
 };
 
 export type SimpleAPIResponse = {
@@ -102,3 +105,21 @@ export interface SpeechConfig {
     isPlaying: boolean;
     setIsPlaying: (isPlaying: boolean) => void;
 }
+
+export type HistoryListApiResponse = {
+    items: {
+        id: string;
+        entra_oid: string;
+        title: string;
+        timestamp: number;
+    }[];
+    continuation_token?: string;
+};
+
+export type HistroyApiResponse = {
+    id: string;
+    entra_oid: string;
+    title: string;
+    answers: any;
+    timestamp: number;
+};

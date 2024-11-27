@@ -1,20 +1,8 @@
 #!/bin/sh
 
-echo ""
-echo "Loading azd .env file from current environment"
-echo ""
-
-while IFS='=' read -r key value; do
-    value=$(echo "$value" | sed 's/^"//' | sed 's/"$//')
-    export "$key=$value"
-done <<EOF
-$(azd env get-values)
-EOF
-
-if [ $? -ne 0 ]; then
-    echo "Failed to load environment variables from azd environment"
-    exit $?
-fi
+# cd into the parent directory of the script, 
+# so that the script generates virtual environments always in the same path.
+cd "${0%/*}" || exit 1
 
 cd ../
 echo 'Creating python virtual environment ".venv"'
@@ -25,9 +13,10 @@ echo "Restoring backend python packages"
 echo ""
 
 ./.venv/bin/python -m pip install -r app/backend/requirements.txt
-if [ $? -ne 0 ]; then
+out=$?
+if [ $out -ne 0 ]; then
     echo "Failed to restore backend python packages"
-    exit $?
+    exit $out
 fi
 
 echo ""
@@ -36,9 +25,10 @@ echo ""
 
 cd app/frontend
 npm install
-if [ $? -ne 0 ]; then
+out=$?
+if [ $out -ne 0 ]; then
     echo "Failed to restore frontend npm packages"
-    exit $?
+    exit $out
 fi
 
 echo ""
@@ -46,9 +36,10 @@ echo "Building frontend"
 echo ""
 
 npm run build
-if [ $? -ne 0 ]; then
+out=$?
+if [ $out -ne 0 ]; then
     echo "Failed to build frontend"
-    exit $?
+    exit $out
 fi
 
 echo ""
@@ -60,7 +51,8 @@ cd ../backend
 port=50505
 host=localhost
 ../../.venv/bin/python -m quart --app main:app run --port "$port" --host "$host" --reload
-if [ $? -ne 0 ]; then
+out=$?
+if [ $out -ne 0 ]; then
     echo "Failed to start backend"
-    exit $?
+    exit $out
 fi

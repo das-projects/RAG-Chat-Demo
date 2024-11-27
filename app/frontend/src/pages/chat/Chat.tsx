@@ -1,9 +1,8 @@
 import { useRef, useState, useEffect, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { Helmet } from "react-helmet-async";
-import { Checkbox, Panel, DefaultButton, TextField, ITextFieldProps, ICheckboxProps } from "@fluentui/react";
+import { Panel, DefaultButton } from "@fluentui/react";
 import { SparkleFilled } from "@fluentui/react-icons";
-import { useId } from "@fluentui/react-hooks";
 import readNDJSONStream from "ndjson-readablestream";
 
 import styles from "./Chat.module.css";
@@ -24,22 +23,25 @@ import { Answer, AnswerError, AnswerLoading } from "../../components/Answer";
 import { QuestionInput } from "../../components/QuestionInput";
 import { ExampleList } from "../../components/Example";
 import { UserChatMessage } from "../../components/UserChatMessage";
-import { HelpCallout } from "../../components/HelpCallout";
 import { AnalysisPanel, AnalysisPanelTabs } from "../../components/AnalysisPanel";
+import { HistoryPanel } from "../../components/HistoryPanel";
+import { HistoryProviderOptions, useHistoryManager } from "../../components/HistoryProviders";
+import { HistoryButton } from "../../components/HistoryButton";
 import { SettingsButton } from "../../components/SettingsButton";
 import { ClearChatButton } from "../../components/ClearChatButton";
 import { UploadFile } from "../../components/UploadFile";
 import { useLogin, getToken, requireAccessControl } from "../../authConfig";
-import { VectorSettings } from "../../components/VectorSettings";
 import { useMsal } from "@azure/msal-react";
 import { TokenClaimsDisplay } from "../../components/TokenClaimsDisplay";
 import nexible from "../../assets/nexible_logo.svg";
 import { GPT4VSettings } from "../../components/GPT4VSettings";
 import { LoginContext } from "../../loginContext";
 import { LanguagePicker } from "../../i18n/LanguagePicker";
+import { Settings } from "../../components/Settings/Settings";
 
 const Chat = () => {
     const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
+    const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
     const [promptTemplate, setPromptTemplate] = useState<string>("");
     const [temperature, setTemperature] = useState<number>(0.3);
     const [seed, setSeed] = useState<number | null>(null);
@@ -50,6 +52,7 @@ const Chat = () => {
     const [useSemanticRanker, setUseSemanticRanker] = useState<boolean>(true);
     const [shouldStream, setShouldStream] = useState<boolean>(true);
     const [useSemanticCaptions, setUseSemanticCaptions] = useState<boolean>(false);
+    const [includeCategory, setIncludeCategory] = useState<string>("");
     const [excludeCategory, setExcludeCategory] = useState<string>("");
     const [useSuggestFollowupQuestions, setUseSuggestFollowupQuestions] = useState<boolean>(false);
     const [vectorFieldList, setVectorFieldList] = useState<VectorFieldOptions[]>([VectorFieldOptions.Embedding]);
@@ -81,6 +84,8 @@ const Chat = () => {
     const [showSpeechInput, setShowSpeechInput] = useState<boolean>(false);
     const [showSpeechOutputBrowser, setShowSpeechOutputBrowser] = useState<boolean>(false);
     const [showSpeechOutputAzure, setShowSpeechOutputAzure] = useState<boolean>(false);
+    const [showChatHistoryBrowser, setShowChatHistoryBrowser] = useState<boolean>(false);
+    const [showChatHistoryCosmos, setShowChatHistoryCosmos] = useState<boolean>(false);
     const audio = useRef(new Audio()).current;
     const [isPlaying, setIsPlaying] = useState(false);
 
@@ -106,6 +111,8 @@ const Chat = () => {
             setShowSpeechInput(config.showSpeechInput);
             setShowSpeechOutputBrowser(config.showSpeechOutputBrowser);
             setShowSpeechOutputAzure(config.showSpeechOutputAzure);
+            setShowChatHistoryBrowser(config.showChatHistoryBrowser);
+            setShowChatHistoryCosmos(config.showChatHistoryCosmos);
         });
     };
 
@@ -132,7 +139,7 @@ const Chat = () => {
                 if (event["context"] && event["context"]["data_points"]) {
                     event["message"] = event["delta"];
                     askResponse = event as ChatAppResponse;
-                } else if (event["delta"]["content"]) {
+                } else if (event["delta"] && event["delta"]["content"]) {
                     setIsLoading(false);
                     await updateState(event["delta"]["content"]);
                 } else if (event["context"]) {
@@ -155,6 +162,13 @@ const Chat = () => {
     const client = useLogin ? useMsal().instance : undefined;
     const { loggedIn } = useContext(LoginContext);
 
+    const historyProvider: HistoryProviderOptions = (() => {
+        if (useLogin && showChatHistoryCosmos) return HistoryProviderOptions.CosmosDB;
+        if (showChatHistoryBrowser) return HistoryProviderOptions.IndexedDB;
+        return HistoryProviderOptions.None;
+    })();
+    const historyManager = useHistoryManager(historyProvider);
+
     const makeApiRequest = async (question: string) => {
         lastQuestionRef.current = question;
 
@@ -176,6 +190,7 @@ const Chat = () => {
                 context: {
                     overrides: {
                         prompt_template: promptTemplate.length === 0 ? undefined : promptTemplate,
+                        include_category: includeCategory.length === 0 ? undefined : includeCategory,
                         exclude_category: excludeCategory.length === 0 ? undefined : excludeCategory,
                         top: retrieveCount,
                         temperature: temperature,
@@ -208,12 +223,20 @@ const Chat = () => {
             if (shouldStream) {
                 const parsedResponse: ChatAppResponse = await handleAsyncRequest(question, answers, response.body);
                 setAnswers([...answers, [question, parsedResponse]]);
+                if (typeof parsedResponse.session_state === "string" && parsedResponse.session_state !== "") {
+                    const token = client ? await getToken(client) : undefined;
+                    historyManager.addItem(parsedResponse.session_state, [...answers, [question, parsedResponse]], token);
+                }
             } else {
                 const parsedResponse: ChatAppResponseOrError = await response.json();
                 if (parsedResponse.error) {
                     throw Error(parsedResponse.error);
                 }
                 setAnswers([...answers, [question, parsedResponse as ChatAppResponse]]);
+                if (typeof parsedResponse.session_state === "string" && parsedResponse.session_state !== "") {
+                    const token = client ? await getToken(client) : undefined;
+                    historyManager.addItem(parsedResponse.session_state, [...answers, [question, parsedResponse as ChatAppResponse]], token);
+                }
             }
             setSpeechUrls([...speechUrls, null]);
         } catch (e) {
@@ -241,56 +264,63 @@ const Chat = () => {
         getConfig();
     }, []);
 
-    const onPromptTemplateChange = (_ev?: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, newValue?: string) => {
-        setPromptTemplate(newValue || "");
-    };
-
-    const onTemperatureChange = (_ev?: React.SyntheticEvent<HTMLElement, Event>, newValue?: string) => {
-        setTemperature(parseFloat(newValue || "0"));
-    };
-
-    const onSeedChange = (_ev?: React.SyntheticEvent<HTMLElement, Event>, newValue?: string) => {
-        setSeed(parseInt(newValue || ""));
-    };
-
-    const onMinimumSearchScoreChange = (_ev?: React.SyntheticEvent<HTMLElement, Event>, newValue?: string) => {
-        setMinimumSearchScore(parseFloat(newValue || "0"));
-    };
-
-    const onMinimumRerankerScoreChange = (_ev?: React.SyntheticEvent<HTMLElement, Event>, newValue?: string) => {
-        setMinimumRerankerScore(parseFloat(newValue || "0"));
-    };
-
-    const onRetrieveCountChange = (_ev?: React.SyntheticEvent<HTMLElement, Event>, newValue?: string) => {
-        setRetrieveCount(parseInt(newValue || "3"));
-    };
-
-    const onUseSemanticRankerChange = (_ev?: React.FormEvent<HTMLElement | HTMLInputElement>, checked?: boolean) => {
-        setUseSemanticRanker(!!checked);
-    };
-
-    const onUseSemanticCaptionsChange = (_ev?: React.FormEvent<HTMLElement | HTMLInputElement>, checked?: boolean) => {
-        setUseSemanticCaptions(!!checked);
-    };
-
-    const onShouldStreamChange = (_ev?: React.FormEvent<HTMLElement | HTMLInputElement>, checked?: boolean) => {
-        setShouldStream(!!checked);
-    };
-
-    const onExcludeCategoryChanged = (_ev?: React.FormEvent, newValue?: string) => {
-        setExcludeCategory(newValue || "");
-    };
-
-    const onUseSuggestFollowupQuestionsChange = (_ev?: React.FormEvent<HTMLElement | HTMLInputElement>, checked?: boolean) => {
-        setUseSuggestFollowupQuestions(!!checked);
-    };
-
-    const onUseOidSecurityFilterChange = (_ev?: React.FormEvent<HTMLElement | HTMLInputElement>, checked?: boolean) => {
-        setUseOidSecurityFilter(!!checked);
-    };
-
-    const onUseGroupsSecurityFilterChange = (_ev?: React.FormEvent<HTMLElement | HTMLInputElement>, checked?: boolean) => {
-        setUseGroupsSecurityFilter(!!checked);
+    const handleSettingsChange = (field: string, value: any) => {
+        switch (field) {
+            case "promptTemplate":
+                setPromptTemplate(value);
+                break;
+            case "temperature":
+                setTemperature(value);
+                break;
+            case "seed":
+                setSeed(value);
+                break;
+            case "minimumRerankerScore":
+                setMinimumRerankerScore(value);
+                break;
+            case "minimumSearchScore":
+                setMinimumSearchScore(value);
+                break;
+            case "retrieveCount":
+                setRetrieveCount(value);
+                break;
+            case "useSemanticRanker":
+                setUseSemanticRanker(value);
+                break;
+            case "useSemanticCaptions":
+                setUseSemanticCaptions(value);
+                break;
+            case "excludeCategory":
+                setExcludeCategory(value);
+                break;
+            case "includeCategory":
+                setIncludeCategory(value);
+                break;
+            case "useOidSecurityFilter":
+                setUseOidSecurityFilter(value);
+                break;
+            case "useGroupsSecurityFilter":
+                setUseGroupsSecurityFilter(value);
+                break;
+            case "shouldStream":
+                setShouldStream(value);
+                break;
+            case "useSuggestFollowupQuestions":
+                setUseSuggestFollowupQuestions(value);
+                break;
+            case "useGPT4V":
+                setUseGPT4V(value);
+                break;
+            case "gpt4vInput":
+                setGPT4VInput(value);
+                break;
+            case "vectorFieldList":
+                setVectorFieldList(value);
+                break;
+            case "retrievalMode":
+                setRetrievalMode(value);
+                break;
+        }
     };
 
     const onExampleClicked = (example: string) => {
@@ -318,33 +348,6 @@ const Chat = () => {
         setSelectedAnswer(index);
     };
 
-    // IDs for form labels and their associated callouts
-    const promptTemplateId = useId("promptTemplate");
-    const promptTemplateFieldId = useId("promptTemplateField");
-    const temperatureId = useId("temperature");
-    const temperatureFieldId = useId("temperatureField");
-    const seedId = useId("seed");
-    const seedFieldId = useId("seedField");
-    const searchScoreId = useId("searchScore");
-    const searchScoreFieldId = useId("searchScoreField");
-    const rerankerScoreId = useId("rerankerScore");
-    const rerankerScoreFieldId = useId("rerankerScoreField");
-    const retrieveCountId = useId("retrieveCount");
-    const retrieveCountFieldId = useId("retrieveCountField");
-    const excludeCategoryId = useId("excludeCategory");
-    const excludeCategoryFieldId = useId("excludeCategoryField");
-    const semanticRankerId = useId("semanticRanker");
-    const semanticRankerFieldId = useId("semanticRankerField");
-    const semanticCaptionsId = useId("semanticCaptions");
-    const semanticCaptionsFieldId = useId("semanticCaptionsField");
-    const suggestFollowupQuestionsId = useId("suggestFollowupQuestions");
-    const suggestFollowupQuestionsFieldId = useId("suggestFollowupQuestionsField");
-    const useOidSecurityFilterId = useId("useOidSecurityFilter");
-    const useOidSecurityFilterFieldId = useId("useOidSecurityFilterField");
-    const useGroupsSecurityFilterId = useId("useGroupsSecurityFilter");
-    const useGroupsSecurityFilterFieldId = useId("useGroupsSecurityFilterField");
-    const shouldStreamId = useId("shouldStream");
-    const shouldStreamFieldId = useId("shouldStreamField");
     const { t, i18n } = useTranslation();
 
     return (
@@ -353,12 +356,19 @@ const Chat = () => {
             <Helmet>
                 <title>{t("pageTitle")}</title>
             </Helmet>
-            <div className={styles.commandsContainer}>
-                <ClearChatButton className={styles.commandButton} onClick={clearChat} disabled={!lastQuestionRef.current || isLoading} />
-                {showUserUpload && <UploadFile className={styles.commandButton} disabled={!loggedIn} />}
-                <SettingsButton className={styles.commandButton} onClick={() => setIsConfigPanelOpen(!isConfigPanelOpen)} />
+            <div className={styles.commandsSplitContainer}>
+                <div className={styles.commandsContainer}>
+                    {((useLogin && showChatHistoryCosmos) || showChatHistoryBrowser) && (
+                        <HistoryButton className={styles.commandButton} onClick={() => setIsHistoryPanelOpen(!isHistoryPanelOpen)} />
+                    )}
+                </div>
+                <div className={styles.commandsContainer}>
+                    <ClearChatButton className={styles.commandButton} onClick={clearChat} disabled={!lastQuestionRef.current || isLoading} />
+                    {showUserUpload && <UploadFile className={styles.commandButton} disabled={!loggedIn} />}
+                    <SettingsButton className={styles.commandButton} onClick={() => setIsConfigPanelOpen(!isConfigPanelOpen)} />
+                </div>
             </div>
-            <div className={styles.chatRoot}>
+            <div className={styles.chatRoot} style={{ marginLeft: isHistoryPanelOpen ? "300px" : "0" }}>
                 <div className={styles.chatContainer}>
                     {!lastQuestionRef.current ? (
                         <div className={styles.chatEmptyState}>
@@ -457,6 +467,20 @@ const Chat = () => {
                         citationHeight="810px"
                         answer={answers[selectedAnswer][1]}
                         activeTab={activeAnalysisPanelTab}
+                    />
+                )}
+
+                {((useLogin && showChatHistoryCosmos) || showChatHistoryBrowser) && (
+                    <HistoryPanel
+                        provider={historyProvider}
+                        isOpen={isHistoryPanelOpen}
+                        notify={!isStreaming && !isLoading}
+                        onClose={() => setIsHistoryPanelOpen(false)}
+                        onChatSelected={answers => {
+                            if (answers.length === 0) return;
+                            setAnswers(answers);
+                            lastQuestionRef.current = answers[answers.length - 1][0];
+                        }}
                     />
                 )}
 
@@ -718,7 +742,6 @@ const Chat = () => {
                             <HelpCallout labelId={shouldStreamId} fieldId={shouldStreamFieldId} helpText={t("helpTexts.streamChat")} label={props?.label} />
                         )}
                     />
-
                     {useLogin && <TokenClaimsDisplay />}
                 </Panel>
             </div>
