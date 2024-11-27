@@ -134,7 +134,6 @@ class ChatReadRetrieveReadApproach(ChatApproach):
             model=self.chatgpt_model,
             system_prompt=self.query_prompt_template,
             tools=tools,
-            few_shots=self.query_prompt_few_shots,
             past_messages=messages[:-1],
             new_user_content=user_query_request,
             max_tokens=self.chatgpt_token_limit - query_response_token_limit,
@@ -190,6 +189,7 @@ class ChatReadRetrieveReadApproach(ChatApproach):
             model=self.chatgpt_model,
             system_prompt=system_message,
             past_messages=messages[:-1],
+            few_shots=self.query_prompt_few_shots,
             # Model does not handle lengthy system messages well. Moving sources to latest user conversation to solve follow up questions prompt.
             new_user_content=original_user_query + "\n\nSources:\n" + content,
             max_tokens=self.chatgpt_token_limit - response_token_limit,
