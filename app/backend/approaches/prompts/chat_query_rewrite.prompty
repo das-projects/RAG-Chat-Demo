@@ -1,39 +1,40 @@
 ---
-name: Rewrite RAG query
-description: Suggest the optimal search query based on the user's query, examples, and chat history.
+name: RAG-Abfrage neu schreiben
+description: Schlagen Sie die optimale Suchanfrage basierend auf der Abfrage des Benutzers, Beispielen und dem Chatverlauf vor.
 model:
     api: chat
     parameters:
         tools: ${file:chat_query_rewrite_tools.json}
 sample:
-    user_query: Does it include hearing?
+    user_query: Wann muss ich abschließen?
     past_messages:
         - role: user
-          content: "What is included in my Northwind Health Plus plan that is not in standard?"
+          content: "Was ist in meinem Reiserücktrittsversicherung enthalten"
         - role: assistant
-          content: "The Northwind Health Plus plan includes coverage for emergency services, mental health and substance abuse coverage, and out-of-network services, which are not included in the Northwind Standard plan. [Benefit_Options.pdf#page=3]"
+          content: "Wir wissen, dass Dir in diesen außergewöhnlichen Zeiten Flexibilität sehr wichtig ist.Deshalb kannst Du unsere Reiseversicherung bzw. den Reiserücktritts-Schutz bis zu 14 Tage vor Deiner Abreise abschließen.
+          Es sind alle Reisen versichert, die nach Vertragsbeginn gebucht wurden. Wenn Du Deine Reise schon vor Beginn der Versicherung gebucht hast, bist Du dann versichert, wenn zwischen Vertragsbeginn und dem geplanten Start der Reise mindestens 14 Tage liegen. Buchst und verreist Du kurzfristig (es liegen zwischen Buchung und geplantem Start der Reise weniger als 14 Tage), musst Du unseren Reiserücktritts-Schutz spätestens innerhalb der nächsten 3 Werktage abschließen. [Reise_Reiseversicherung FAQ.pdf#page=1]"
 ---
 system:
-Below is a history of the conversation so far, and a new question asked by the user that needs to be answered by searching in a knowledge base.
-You have access to Azure AI Search index with 100's of documents.
-Generate a search query based on the conversation and the new question.
-Do not include cited source filenames and document names e.g. info.txt or doc.pdf in the search query terms.
-Do not include any text inside [] or <<>> in the search query terms.
-Do not include any special characters like '+'.
-If the question is not in English, translate the question to English before generating the search query.
-If you cannot generate a search query, return just the number 0.
+Nachfolgend finden Sie einen Verlauf der bisherigen Konversation und eine neue Frage des Benutzers, die durch eine Suche in einer Wissensdatenbank beantwortet werden muss.
+Sie haben Zugriff auf den Azure AI Search-Index mit Hunderten von Dokumenten.
+Generieren Sie eine Suchanfrage basierend auf der Konversation und der neuen Frage.
+Fügen Sie in die Suchbegriffe keine zitierten Quelldateinamen und Dokumentnamen wie z. B. info.txt oder doc.pdf ein.
+Fügen Sie in die Suchbegriffe keinen Text zwischen [] oder <<>> ein.
+Fügen Sie keine Sonderzeichen wie „+“ ein.
+Wenn die Frage nicht auf Englisch ist, übersetzen Sie die Frage ins Englische, bevor Sie die Suchanfrage generieren.
+Wenn Sie keine Suchanfrage generieren können, geben Sie nur die Zahl 0 zurück.
 
 user:
-(EXAMPLE) How did crypto do last year?
+(BEISPIEL) Wie hat sich Kryptowährung im letzten Jahr entwickelt?
 
 assistant:
-Summarize Cryptocurrency Market Dynamics from last year
+Zusammenfassen der Marktdynamik von Kryptowährungen im letzten Jahr
 
 user:
-(EXAMPLE) What are my health plans?
+(BEISPIEL) Welche Krankenversicherungspläne habe ich?
 
 assistant:
-Show available health plans
+Verfügbare Krankenversicherungspläne anzeigen
 
 {% for message in past_messages %}
 {{ message["role"] }}:
@@ -41,4 +42,4 @@ Show available health plans
 {% endfor %}
 
 user:
-Generate search query for: {{ user_query }}
+Suchanfrage generieren für: {{ user_query }}
