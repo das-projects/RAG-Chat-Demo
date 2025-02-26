@@ -1,3 +1,29 @@
+"""
+Backend Application for RAG-based Chat Demo
+
+This module implements a Quart-based ASGI web application that serves as the backend for a 
+Retrieval-Augmented Generation (RAG) chat system. It provides endpoints for chat interactions,
+document retrieval, file uploads, and authentication.
+
+The application integrates with various Azure services:
+- Azure OpenAI for language model capabilities
+- Azure AI Search for document retrieval
+- Azure Blob Storage for document storage
+- Azure Speech Services for speech-to-text and text-to-speech
+- Azure AD for authentication and authorization
+
+Key features:
+- Multiple RAG approaches (RetrieveThenRead, ChatReadRetrieveRead)
+- Support for multimodal models (GPT-4V)
+- User file uploads with access control
+- Chat history persistence
+- Speech input/output capabilities
+- Authentication and authorization
+
+The application is designed to be deployed on Azure App Service or similar hosting environments,
+with configuration through environment variables.
+"""
+
 import dataclasses
 import io
 import json
@@ -103,6 +129,12 @@ mimetypes.add_type("text/css", ".css")
 
 @bp.route("/")
 async def index():
+    """
+    Serve the main application HTML page.
+    
+    Returns:
+        Response: The index.html file from the static folder.
+    """
     return await bp.send_static_file("index.html")
 
 
@@ -110,16 +142,40 @@ async def index():
 # See https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-browser/docs/initialization.md#redirecturi-considerations for more information
 @bp.route("/redirect")
 async def redirect():
+    """
+    Provide an empty page for MSAL authentication redirects.
+    
+    This endpoint returns an empty response as recommended by the MSAL.js library
+    for handling authentication redirects.
+    
+    Returns:
+        str: An empty string.
+    """
     return ""
 
 
 @bp.route("/favicon.ico")
 async def favicon():
+    """
+    Serve the application favicon.
+    
+    Returns:
+        Response: The favicon.ico file from the static folder.
+    """
     return await bp.send_static_file("favicon.ico")
 
 
 @bp.route("/assets/<path:path>")
 async def assets(path):
+    """
+    Serve static assets from the assets directory.
+    
+    Args:
+        path (str): The path to the requested asset file.
+        
+    Returns:
+        Response: The requested asset file.
+    """
     return await send_from_directory(Path(__file__).resolve().parent / "static" / "assets", path)
 
 
@@ -171,6 +227,22 @@ async def content_file(path: str, auth_claims: Dict[str, Any]):
 @bp.route("/ask", methods=["POST"])
 @authenticated
 async def ask(auth_claims: Dict[str, Any]):
+    """
+    Process a single-turn question and answer request.
+    
+    This endpoint uses the RetrieveThenRead approach to answer a question based on
+    retrieved documents. It supports both text-only and vision-enabled models.
+    
+    Args:
+        auth_claims (Dict[str, Any]): The authentication claims of the current user.
+        
+    Returns:
+        Response: JSON response containing the answer and supporting information.
+        
+    Raises:
+        415: If the request is not in JSON format.
+        Various errors: Depending on the underlying approach implementation.
+    """
     if not request.is_json:
         return jsonify({"error": "request must be json"}), 415
     request_json = await request.get_json()
@@ -192,13 +264,41 @@ async def ask(auth_claims: Dict[str, Any]):
 
 
 class JSONEncoder(json.JSONEncoder):
+    """
+    Custom JSON encoder that handles dataclasses.
+    
+    This encoder converts dataclass instances to dictionaries before JSON serialization.
+    """
     def default(self, o):
+        """
+        Convert the object to a JSON serializable type.
+        
+        Args:
+            o: The object to serialize.
+            
+        Returns:
+            A JSON serializable representation of the object.
+        """
         if dataclasses.is_dataclass(o) and not isinstance(o, type):
             return dataclasses.asdict(o)
         return super().default(o)
 
 
 async def format_as_ndjson(r: AsyncGenerator[dict, None]) -> AsyncGenerator[str, None]:
+    """
+    Format an async generator of dictionaries as newline-delimited JSON.
+    
+    This function is used for streaming responses in the chat endpoints.
+    
+    Args:
+        r (AsyncGenerator[dict, None]): An async generator yielding dictionaries.
+        
+    Yields:
+        str: Each dictionary converted to a JSON string with a newline character.
+        
+    Catches:
+        Exception: Any exception during generation, yielding an error dictionary.
+    """
     try:
         async for event in r:
             yield json.dumps(event, ensure_ascii=False, cls=JSONEncoder) + "\n"
@@ -210,6 +310,22 @@ async def format_as_ndjson(r: AsyncGenerator[dict, None]) -> AsyncGenerator[str,
 @bp.route("/chat", methods=["POST"])
 @authenticated
 async def chat(auth_claims: Dict[str, Any]):
+    """
+    Process a multi-turn chat conversation request.
+    
+    This endpoint uses the ChatReadRetrieveRead approach to handle conversational
+    interactions with document retrieval. It supports both text-only and vision-enabled models.
+    
+    Args:
+        auth_claims (Dict[str, Any]): The authentication claims of the current user.
+        
+    Returns:
+        Response: JSON response containing the chat completion and supporting information.
+        
+    Raises:
+        415: If the request is not in JSON format.
+        Various errors: Depending on the underlying approach implementation.
+    """
     if not request.is_json:
         return jsonify({"error": "request must be json"}), 415
     request_json = await request.get_json()
@@ -244,6 +360,23 @@ async def chat(auth_claims: Dict[str, Any]):
 @bp.route("/chat/stream", methods=["POST"])
 @authenticated
 async def chat_stream(auth_claims: Dict[str, Any]):
+    """
+    Process a streaming multi-turn chat conversation request.
+    
+    This endpoint is similar to the /chat endpoint but returns a streaming response
+    using newline-delimited JSON. It supports both text-only and vision-enabled models.
+    
+    Args:
+        auth_claims (Dict[str, Any]): The authentication claims of the current user.
+        
+    Returns:
+        Response: A streaming response with newline-delimited JSON containing
+                 chat completion chunks.
+        
+    Raises:
+        415: If the request is not in JSON format.
+        Various errors: Depending on the underlying approach implementation.
+    """
     if not request.is_json:
         return jsonify({"error": "request must be json"}), 415
     request_json = await request.get_json()
@@ -281,12 +414,31 @@ async def chat_stream(auth_claims: Dict[str, Any]):
 # Send MSAL.js settings to the client UI
 @bp.route("/auth_setup", methods=["GET"])
 def auth_setup():
+    """
+    Provide authentication setup information to the client.
+    
+    This endpoint returns the necessary configuration for the MSAL.js library
+    to handle authentication on the client side.
+    
+    Returns:
+        Response: JSON containing MSAL.js configuration settings.
+    """
     auth_helper = current_app.config[CONFIG_AUTH_CLIENT]
     return jsonify(auth_helper.get_auth_setup_for_client())
 
 
 @bp.route("/config", methods=["GET"])
 def config():
+    """
+    Provide feature configuration information to the client.
+    
+    This endpoint returns a JSON object containing boolean flags that indicate
+    which features are enabled in the current deployment. The client UI uses
+    these flags to show or hide various UI elements.
+    
+    Returns:
+        Response: JSON containing feature configuration flags.
+    """
     return jsonify(
         {
             "showGPT4VOptions": current_app.config[CONFIG_GPT4V_DEPLOYED],
@@ -305,6 +457,19 @@ def config():
 
 @bp.route("/speech", methods=["POST"])
 async def speech():
+    """
+    Convert text to speech using Azure Speech Services.
+    
+    This endpoint takes a text string and returns an audio file containing
+    the synthesized speech. It uses Azure Speech Services with Azure AD authentication.
+    
+    Returns:
+        Response: MP3 audio data of the synthesized speech.
+        
+    Raises:
+        415: If the request is not in JSON format.
+        500: If speech synthesis fails for any reason.
+    """
     if not request.is_json:
         return jsonify({"error": "request must be json"}), 415
 
@@ -350,6 +515,22 @@ async def speech():
 @bp.post("/upload")
 @authenticated
 async def upload(auth_claims: dict[str, Any]):
+    """
+    Upload a file to the user's personal storage and index it for search.
+    
+    This endpoint handles file uploads from authenticated users. The file is stored
+    in Azure Data Lake Storage in a directory specific to the user, and then processed
+    and indexed for search with access control applied.
+    
+    Args:
+        auth_claims (dict[str, Any]): The authentication claims of the current user.
+        
+    Returns:
+        Response: JSON response indicating success or failure.
+        
+    Raises:
+        400: If no file was included in the request.
+    """
     request_files = await request.files
     if "file" not in request_files:
         # If no files were included in the request, return an error response
@@ -379,6 +560,18 @@ async def upload(auth_claims: dict[str, Any]):
 @bp.post("/delete_uploaded")
 @authenticated
 async def delete_uploaded(auth_claims: dict[str, Any]):
+    """
+    Delete a previously uploaded file from the user's storage and search index.
+    
+    This endpoint removes a file from the user's personal storage in Azure Data Lake
+    and also removes it from the search index.
+    
+    Args:
+        auth_claims (dict[str, Any]): The authentication claims of the current user.
+        
+    Returns:
+        Response: JSON response indicating success.
+    """
     request_json = await request.get_json()
     filename = request_json.get("filename")
     user_oid = auth_claims["oid"]
@@ -394,6 +587,18 @@ async def delete_uploaded(auth_claims: dict[str, Any]):
 @bp.get("/list_uploaded")
 @authenticated
 async def list_uploaded(auth_claims: dict[str, Any]):
+    """
+    List all files uploaded by the current user.
+    
+    This endpoint retrieves a list of all files in the user's personal storage
+    directory in Azure Data Lake.
+    
+    Args:
+        auth_claims (dict[str, Any]): The authentication claims of the current user.
+        
+    Returns:
+        Response: JSON array containing the filenames of all uploaded files.
+    """
     user_oid = auth_claims["oid"]
     user_blob_container_client: FileSystemClient = current_app.config[CONFIG_USER_BLOB_CONTAINER_CLIENT]
     files = []
@@ -409,6 +614,18 @@ async def list_uploaded(auth_claims: dict[str, Any]):
 
 @bp.before_app_serving
 async def setup_clients():
+    """
+    Initialize all clients and services before the application starts serving requests.
+    
+    This function is called before the application starts serving requests and is responsible for:
+    1. Reading configuration from environment variables
+    2. Setting up authentication credentials
+    3. Initializing clients for Azure services (Search, Storage, OpenAI, etc.)
+    4. Configuring RAG approaches based on the environment
+    
+    The function sets up different configurations based on the deployment environment
+    (local development vs. Azure deployment) and feature flags.
+    """
     # Replace these with your own values, either in environment variables or directly here
     AZURE_STORAGE_ACCOUNT = os.environ["AZURE_STORAGE_ACCOUNT"]
     AZURE_STORAGE_CONTAINER = os.environ["AZURE_STORAGE_CONTAINER"]
@@ -729,6 +946,13 @@ async def setup_clients():
 
 @bp.after_app_serving
 async def close_clients():
+    """
+    Close all client connections when the application stops serving requests.
+    
+    This function is called when the application is shutting down and ensures
+    that all client connections to Azure services are properly closed to avoid
+    resource leaks.
+    """
     await current_app.config[CONFIG_SEARCH_CLIENT].close()
     await current_app.config[CONFIG_BLOB_CONTAINER_CLIENT].close()
     if current_app.config.get(CONFIG_USER_BLOB_CONTAINER_CLIENT):
@@ -736,6 +960,15 @@ async def close_clients():
 
 
 def create_app():
+    """
+    Create and configure the Quart application.
+    
+    This function creates a new Quart application instance, registers blueprints,
+    configures logging, sets up telemetry (if enabled), and configures CORS.
+    
+    Returns:
+        Quart: The configured Quart application instance ready to be run.
+    """
     app = Quart(__name__)
     app.register_blueprint(bp)
     app.register_blueprint(chat_history_cosmosdb_bp)
