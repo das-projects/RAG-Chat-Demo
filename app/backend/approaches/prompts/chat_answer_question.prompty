@@ -4,17 +4,17 @@ description: Beantworten Sie Fragen zu Nexible, einem digitalen Versicherungsdie
 model:
     api: chat
 sample:
-    user_query: Was sind die besonderen Vorteile der Nexible Reiseversicherung gegenüber herkömmlichen Angeboten?
-    include_follow_up_questions: true
-    past_messages:
-        - role: user
-          content: “Wie funktioniert der Abschluss der Nexible Zahnzusatzversicherung?”
-        - role: assistant
-          content: “Die Nexible Zahnzusatzversicherung zeichnet sich durch individuell wählbare Tarife, schnelle digitale Abwicklung und transparente Prozesse aus. Weitere Details entnehmen Sie bitte den untenstehenden Quellen. [nexible_info.pdf#page=7]”
+    user_query: Was sind die besonderen Vorteile der Nexible Reiseversicherung gegenüber herkömmlichen Angeboten?
+    include_follow_up_questions: true
+    past_messages:
+        - role: user
+          content: “Wie funktioniert der Abschluss der Nexible Zahnzusatzversicherung?”
+        - role: assistant
+          content: “Die Nexible Zahnzusatzversicherung zeichnet sich durch individuell wählbare Tarife, schnelle digitale Abwicklung und transparente Prozesse aus. Weitere Details entnehmen Sie bitte den untenstehenden Quellen. [nexible_info.pdf#page=7]”
     text_sources:
-        - “nexible_info.pdf#page=2: Nexible ist ein innovativer, digitaler Versicherungsdienstleister, der sich auf Reiseversicherungen und Zahnzusatzversicherungen spezialisiert hat. Das Unternehmen setzt auf eine einfache, schnelle und vollständig digitale Abwicklung, um seinen Kunden einen modernen Service zu bieten.”
-        - “nexible_info.pdf#page=5: Die Nexible Reiseversicherung bietet umfangreichen Schutz im Ausland – inklusive medizinischer Notfallversorgung, Reiserücktrittsversicherung und Gepäckschutz. Das digitale Antragsverfahren ermöglicht eine unkomplizierte Verwaltung der Verträge.”
-        - “nexible_info.pdf#page=7: Bei der Nexible Zahnzusatzversicherung profitieren Kunden von flexiblen Tarifen, einer schnellen Schadensabwicklung und umfassender digitaler Unterstützung. Durch Kooperationen mit renommierten Partnern im Gesundheitswesen wird ein hoher Service-Standard gewährleistet.”
+        - “nexible_info.pdf#page=2: Nexible ist ein innovativer, digitaler Versicherungsdienstleister, der sich auf Reiseversicherungen und Zahnzusatzversicherungen spezialisiert hat. Das Unternehmen setzt auf eine einfache, schnelle und vollständig digitale Abwicklung, um seinen Kunden einen modernen Service zu bieten.”
+        - “nexible_info.pdf#page=5: Die Nexible Reiseversicherung bietet umfangreichen Schutz im Ausland – inklusive medizinischer Notfallversorgung, Reiserücktrittsversicherung und Gepäckschutz. Das digitale Antragsverfahren ermöglicht eine unkomplizierte Verwaltung der Verträge.”
+        - “nexible_info.pdf#page=7: Bei der Nexible Zahnzusatzversicherung profitieren Kunden von flexiblen Tarifen, einer schnellen Schadensabwicklung und umfassender digitaler Unterstützung. Durch Kooperationen mit renommierten Partnern im Gesundheitswesen wird ein hoher Service-Standard gewährleistet.”
 ---
 system:
 {% if override_prompt %}
