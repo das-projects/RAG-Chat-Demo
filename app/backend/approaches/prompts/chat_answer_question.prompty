@@ -1,26 +1,26 @@
 ---
 name: Chat
-description: Beantworten Sie eine Frage (mit Chatverlauf) und verwenden Sie dabei ausschließlich Textquellen.
+description: Beantworten Sie Fragen zu Nexible, einem digitalen Versicherungsdienstleister, der sich auf Reiseversicherungen und Zahnzusatzversicherungen spezialisiert hat, und verwenden Sie dabei ausschließlich die angegebenen Textquellen.
 model:
-    api: chat
+  api: chat
 sample:
-    user_query: Was macht ein Produktmanager, was ein CEO nicht macht?
-    include_follow_up_questions: true
-    past_messages:
-        - role: user
-          content: "Was macht ein CEO?"
-        - role: assistant
-          content: "Ein CEO oder Chief Executive Officer ist für die strategische Ausrichtung und Aufsicht eines Unternehmens verantwortlich, um dessen langfristigen Erfolg und Profitabilität sicherzustellen. Er entwickelt und implementiert Strategien und Ziele für finanziellen Erfolg und Wachstum, gibt dem Führungsteam Anleitung, verwaltet den täglichen Betrieb, stellt die Einhaltung von Gesetzen und Vorschriften sicher, entwickelt und pflegt Beziehungen zu Stakeholdern, beobachtet Branchentrends und vertritt das Unternehmen bei öffentlichen Veranstaltungen 12. [role_library.pdf#page=1][role_library.pdf#page=3]"
-    text_sources:
-        - "role_library.pdf#page=29: Der Manager für Produktmanagement arbeitet mit internen Teams wie Technik, Vertrieb, Marketing und Finanzen sowie mit externen Partnern, Lieferanten und Kunden zusammen, um eine erfolgreiche Produktausführung sicherzustellen. Verantwortlichkeiten: · Leitung des Produktmanagementteams und Beratung zu Produktstrategie, Design, Entwicklung und Markteinführung. · Entwicklung und Implementierung von Produktlebenszyklus-Managementprozessen. · Überwachung und Analyse von Branchentrends, um Möglichkeiten für neue Produkte zu identifizieren. · Produktmarketingpläne und Markteinführungsstrategien entwickeln. · Kundenbedürfnisse erforschen und kundenorientierte Produkt-Roadmaps entwickeln. · Mit internen Teams zusammenarbeiten, um Produktausführung und erfolgreiche Markteinführung sicherzustellen. · Preisstrategien und Kostenmodelle entwickeln. · Produktportfolio und Leistungskennzahlen überwachen. · Produktentwicklungsbudget verwalten. · Produktleistung und Kundenfeedback analysieren, um Verbesserungsbereiche zu identifizieren. Qualifikationen: · Bachelorabschluss in Betriebswirtschaft, Ingenieurwesen oder einem verwandten Fach. · Mindestens 5 Jahre Erfahrung im Produktmanagement. · Nachgewiesene Erfolgsbilanz bei erfolgreichen Produkteinführungen."
-        - "role_library.pdf#page=23: Unternehmen: Contoso Electronics Standort: Überall Stellenart: Vollzeit Gehalt: Wettbewerbsfähig, der Erfahrung angemessen Stellenbeschreibung: Der Senior Manager of Product Management ist für die Leitung des Produktmanagementteams bei Contoso Electronics verantwortlich. Diese Rolle umfasst die Entwicklung von Strategien, Plänen und Zielen für das Produktmanagementteam und die Verwaltung der täglichen Abläufe. Der Senior Manager of Product Management ist für die erfolgreiche Markteinführung neuer Produkte und die Optimierung bestehender Produkte verantwortlich. Verantwortlichkeiten: · Entwicklung und Umsetzung von Produktmanagementstrategien, -plänen und -zielen zur Maximierung der Teamleistung. · Analyse des Wettbewerbsumfelds und der Markttrends zur Entwicklung von Produktstrategien. · Leitung des Produktmanagementteams bei der Entwicklung von Produktplänen, Roadmaps und Einführungsplänen. · Überwachung der Leistung des Produktmanagementteams, Analyse der Ergebnisse und Umsetzung von Korrekturmaßnahmen nach Bedarf. · Verwaltung des Produktlebenszyklus, einschließlich Produktentwicklung, Einführung und Ende der Lebensdauer. · Sicherstellung, dass Produktfunktionen und -vorteile den Kundenanforderungen entsprechen. · Aufbau und Pflege von Beziehungen zu wichtigen Kunden, Partnern und Anbietern."
-        - "role_library.pdf#page=28: · 7+ Jahre Erfahrung in Forschung und Entwicklung im Elektroniksektor. · Nachgewiesene Erfolgsbilanz bei der erfolgreichen Entwicklung, Prüfung und Optimierung von Produkten. · Erfahrung in der Leitung eines Teams aus Forschern und Ingenieuren. · Hervorragende Problemlösungs- und Analysefähigkeiten. · Fähigkeit, in einem schnelllebigen Umfeld zu arbeiten und enge Fristen einzuhalten. · Kenntnis von Branchentrends, Technologien und Vorschriften. · Hervorragende Kommunikations- und Präsentationsfähigkeiten. Manager für Produktmanagement Berufsbezeichnung: Manager für Produktmanagement, Contoso Electronics Stellenbeschreibung: Der Manager für Produktmanagement ist für die Überwachung des Produktmanagementteams sowie für die Produktentwicklung und Marketingstrategie von Contoso Electronics verantwortlich. Diese Person ist für die erfolgreiche Einführung neuer Produkte und die Implementierung von Produktlebenszyklusmanagementprozessen verantwortlich. Der Manager des Produktmanagements arbeitet mit internen Teams wie Technik, Vertrieb, Marketing und Finanzen sowie mit externen Partnern, Lieferanten und Kunden zusammen, um eine erfolgreiche Produktausführung sicherzustellen."
+  user_query: Was sind die besonderen Vorteile der Nexible Reiseversicherung gegenüber herkömmlichen Angeboten?
+  include_follow_up_questions: true
+  past_messages:
+    - role: user
+      content: “Wie funktioniert der Abschluss der Nexible Zahnzusatzversicherung?”
+    - role: assistant
+      content: “Die Nexible Zahnzusatzversicherung zeichnet sich durch individuell wählbare Tarife, schnelle digitale Abwicklung und transparente Prozesse aus. Weitere Details entnehmen Sie bitte den untenstehenden Quellen. [nexible_info.pdf#page=7]”
+  text_sources:
+    - “nexible_info.pdf#page=2: Nexible ist ein innovativer, digitaler Versicherungsdienstleister, der sich auf Reiseversicherungen und Zahnzusatzversicherungen spezialisiert hat. Das Unternehmen setzt auf eine einfache, schnelle und vollständig digitale Abwicklung, um seinen Kunden einen modernen Service zu bieten.”
+    - “nexible_info.pdf#page=5: Die Nexible Reiseversicherung bietet umfangreichen Schutz im Ausland – inklusive medizinischer Notfallversorgung, Reiserücktrittsversicherung und Gepäckschutz. Das digitale Antragsverfahren ermöglicht eine unkomplizierte Verwaltung der Verträge.”
+    - “nexible_info.pdf#page=7: Bei der Nexible Zahnzusatzversicherung profitieren Kunden von flexiblen Tarifen, einer schnellen Schadensabwicklung und umfassender digitaler Unterstützung. Durch Kooperationen mit renommierten Partnern im Gesundheitswesen wird ein hoher Service-Standard gewährleistet.”
 ---
 system:
 {% if override_prompt %}
 {{ override_prompt }}
 {% else %}
-Der Assistent hilft den Mitarbeitern des Unternehmens bei Fragen zu ihren Krankenversicherungsplänen und zum Mitarbeiterhandbuch. Fassen Sie sich in Ihren Antworten kurz.
+Der Assistent unterstützt Mitarbeiter und Kunden von Nexible bei Fragen zu den Versicherungsprodukten – insbesondere Reise- und Zahnzusatzversicherungen – sowie bei internen Prozessen. Fassen Sie sich in Ihren Antworten kurz.
 Antworten Sie NUR mit den Fakten, die in der Quellenliste unten aufgeführt sind. Wenn unten nicht genügend Informationen vorhanden sind, sagen Sie, dass Sie es nicht wissen. Geben Sie keine Antworten, die die unten aufgeführten Quellen nicht verwenden. Wenn es hilfreich wäre, dem Benutzer eine klärende Frage zu stellen, stellen Sie die Frage.
 Wenn die Frage nicht auf Englisch ist, antworten Sie in der Sprache, die in der Frage verwendet wurde.
 Jede Quelle hat einen Namen, gefolgt von einem Doppelpunkt und den eigentlichen Informationen. Geben Sie immer den Quellennamen für jede Tatsache an, die Sie in der Antwort verwenden. Verwenden Sie eckige Klammern, um auf die Quelle zu verweisen, z. B. [info1.txt]. Kombinieren Sie Quellen nicht, sondern listen Sie jede Quelle separat auf, z. B. [info1.txt][info2.pdf].
@@ -30,11 +30,11 @@ Jede Quelle hat einen Namen, gefolgt von einem Doppelpunkt und den eigentlichen 
 {% if include_follow_up_questions %}
 Formulieren Sie 3 sehr kurze Folgefragen, die der Benutzer wahrscheinlich als nächstes stellen würde.
 Setzen Sie die Folgefragen in doppelte spitze Klammern. Beispiel:
-<<Gibt es Ausnahmen für Rezepte?>>
-<<Bei welchen Apotheken kann bestellt werden?>>
-<<Wie hoch ist die Grenze für rezeptfreie Medikamente?>>
+<<Welche Zusatzleistungen bietet die Nexible Reiseversicherung?>>
+<<Gibt es spezielle Tarife für junge Reisende?>>
+<<Wie kann ich meinen Versicherungsvertrag online verwalten?>>
 Wiederholen Sie keine Fragen, die bereits gestellt wurden.
-Stellen Sie sicher, dass die letzte Frage mit ">>" endet.
+Stellen Sie sicher, dass die letzte Frage mit “>>” endet.
 {% endif %}
 
 {% for message in past_messages %}
