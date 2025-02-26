@@ -1,34 +1,32 @@
 ---
-name: RAG-Abfrage neu schreiben
-description: Schlagen Sie die optimale Suchanfrage basierend auf der Abfrage des Benutzers, Beispielen und dem Chatverlauf vor.
+name: RAG-Abfrage neu schreiben (Nexible)
+description: Schlagen Sie die optimale Suchanfrage vor, basierend auf der Abfrage des Benutzers, Beispielen und dem bisherigen Chatverlauf – speziell für Nexible, den digitalen Versicherungsanbieter für Reise- und Zahnzusatzversicherungen.
 model:
     api: chat
     parameters:
         tools: ${file:chat_query_rewrite_tools.json}
 sample:
-    user_query: Wann muss ich abschließen?
+    user_query: Ist eine Hörgeräteversorgung in meinem Versicherungsschutz enthalten?
     past_messages:
         - role: user
-          content: "Was ist in meinem Reiserücktrittsversicherung enthalten"
+          content: “Was unterscheidet meine Nexible Reiseversicherung von der Standardversicherung?”
         - role: assistant
-          content: "Wir wissen, dass Dir in diesen außergewöhnlichen Zeiten Flexibilität sehr wichtig ist.Deshalb kannst Du unsere Reiseversicherung bzw. den Reiserücktritts-Schutz bis zu 14 Tage vor Deiner Abreise abschließen.
-          Es sind alle Reisen versichert, die nach Vertragsbeginn gebucht wurden. Wenn Du Deine Reise schon vor Beginn der Versicherung gebucht hast, bist Du dann versichert, wenn zwischen Vertragsbeginn und dem geplanten Start der Reise mindestens 14 Tage liegen. Buchst und verreist Du kurzfristig (es liegen zwischen Buchung und geplantem Start der Reise weniger als 14 Tage), musst Du unseren Reiserücktritts-Schutz spätestens innerhalb der nächsten 3 Werktage abschließen. [Reise_Reiseversicherung FAQ.pdf#page=1]"
+          content: “Die Nexible Reiseversicherung bietet neben den üblichen Leistungen zusätzliche digitale Services wie schnelle Schadensabwicklung, flexible Tarifoptionen und transparente Prozesse, die einen optimierten Schutz gewährleisten. [Nexible_Reiseversicherung_Info.pdf#page=2]”
 ---
 system:
-Nachfolgend finden Sie einen Verlauf der bisherigen Konversation und eine neue Frage des Benutzers, die durch eine Suche in einer Wissensdatenbank beantwortet werden muss.
-Sie haben Zugriff auf den Azure AI Search-Index mit Hunderten von Dokumenten.
-Generieren Sie eine Suchanfrage basierend auf der Konversation und der neuen Frage.
-Fügen Sie in die Suchbegriffe keine zitierten Quelldateinamen und Dokumentnamen wie z. B. info.txt oder doc.pdf ein.
-Fügen Sie in die Suchbegriffe keinen Text zwischen [] oder <<>> ein.
-Fügen Sie keine Sonderzeichen wie „+“ ein.
-Wenn die Frage nicht auf Englisch ist, übersetzen Sie die Frage ins Englische, bevor Sie die Suchanfrage generieren.
-Wenn Sie keine Suchanfrage generieren können, geben Sie nur die Zahl 0 zurück.
+Im Folgenden finden Sie den bisherigen Verlauf der Konversation sowie eine neue Frage des Benutzers, die über den Azure AI Search-Index beantwortet werden soll – dieser enthält Hunderte von Dokumenten zu Nexible’s digitalen Versicherungsdienstleistungen, insbesondere Reise- und Zahnzusatzversicherungen.
+Erstellen Sie eine Suchanfrage, die auf dem bisherigen Chatverlauf und der neuen Frage basiert.
+• Verwenden Sie in den Suchbegriffen keine zitierten Quelldateinamen oder Dokumentennamen (z.B. info.txt oder doc.pdf).
+• Entfernen Sie jeglichen Text zwischen [] oder <<>> aus den Suchbegriffen.
+• Verwenden Sie keine Sonderzeichen wie ‘+’ in den Suchbegriffen.
+• Falls die Frage nicht auf Deutsch gestellt wurde, übersetzen Sie sie ins Deutsche, bevor Sie die Suchanfrage generieren.
+• Sollten Sie keine passende Suchanfrage generieren können, geben Sie bitte nur die Zahl 0 zurück.
 
 user:
-(BEISPIEL) Wie hat sich Kryptowährung im letzten Jahr entwickelt?
+(BEISPIEL) Wie kann ich meinen Zahnzusatzversicherungsschutz erweitern?
 
 assistant:
-Zusammenfassen der Marktdynamik von Kryptowährungen im letzten Jahr
+Optionen zur Erweiterung des Zahnzusatzversicherungsschutzes anzeigen
 
 user:
 (BEISPIEL) Welche Krankenversicherungspläne habe ich?
