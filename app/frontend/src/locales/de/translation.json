@@ -1,0 +1,139 @@
+{
+    "pageTitle": "Nexible",
+    "headerTitle": "Nexible Kundensupport",
+    "chat": "Chat",
+    "qa": "Stelle eine Frage",
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "clearChat": "Chat löschen",
+    "history": {
+        "chatHistory": "Chatverlauf",
+        "openChatHistory": "Chatverlauf öffnen",
+        "noHistory": "Kein Chatverlauf",
+        "deleteModalTitle": "Chatverlauf löschen",
+        "deleteModalDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Chatverlauf löschen?",
+        "deleteLabel": "Löschen",
+        "cancelLabel": "Abbrechen",
+        "today": "Heute",
+        "yesterday": "Gestern",
+        "last7days": "Letzte 7 Tage",
+        "last30days": "Letzte 30 Tage"
+    },
+    "upload": {
+        "fileLabel": "Datei hochladen:",
+        "uploadedFilesLabel": "Bisher hochgeladene Dateien:",
+        "noFilesUploaded": "Noch keine Dateien hochgeladen",
+        "loading": "Wird geladen...",
+        "manageFileUploads": "Dateiuploads verwalten",
+        "uploadingFiles": "Dateien werden hochgeladen...",
+        "uploadedFileError": "Fehler beim Hochladen der Datei - bitte erneut versuchen oder den Administrator kontaktieren.",
+        "deleteFile": "Datei löschen",
+        "deletingFile": "Datei wird gelöscht...",
+        "errorDeleting": "Fehler beim Löschen.",
+        "fileDeleted": "Datei gelöscht"
+    },
+    "developerSettings": "Entwicklereinstellungen",
+    "chatEmptyStateTitle": "Nexible Kundensupport",
+    "chatEmptyStateSubtitle": "Stelle eine Frage oder probiere ein Beispiel aus",
+    "defaultExamples": {
+        "1": "Welche Vorteile bietet meine Nexible Reiseversicherung im Basistarif?",
+        "2": "Wie reiche ich einen Schadensfall ein, wenn meine Nexible Reisepläne gestört werden?",
+        "3": "Welche Zahnbehandlungen sind in meinem Nexible Zahnzusatzversicherungstarif abgedeckt?",
+        "placeholder": "Gib eine neue Frage ein (z.B. deckt mein Nexible Tarif präventive Zahnvorsorge ab?)"
+    },
+    "askTitle": "Frage deine Daten",
+    "gpt4vExamples": {
+        "1": "Vergleiche die Auswirkungen von Zinssätzen und BIP in den Finanzmärkten.",
+        "2": "Wie wird sich der S&P 500 Index in den nächsten fünf Jahren voraussichtlich entwickeln? Vergleiche dies mit der bisherigen Entwicklung des S&P 500.",
+        "3": "Kannst du einen Zusammenhang zwischen Ölpreisen und Börsentrends erkennen?",
+        "placeholder": "Beispiel: Deckt mein Tarif jährliche Augenuntersuchungen ab?"
+    },
+    "generatingAnswer": "Antwort wird generiert",
+    "citationWithColon": "Zitat:",
+    "followupQuestions": "Nachfolgende Fragen:",
+    "tooltips": {
+        "submitQuestion": "Frage absenden",
+        "askWithVoice": "Frage per Spracheingabe stellen",
+        "stopRecording": "Aufnahme der Frage beenden",
+        "showThoughtProcess": "Denkprozess anzeigen",
+        "showSupportingContent": "Zusätzliche Inhalte anzeigen",
+        "speakAnswer": "Antwort vorlesen",
+        "info": "Info",
+        "save": "Speichern",
+        "copy": "Kopieren",
+        "copied": "Kopiert!"
+    },
+    "headerTexts": {
+        "thoughtProcess": "Denkprozess",
+        "supportingContent": "Unterstützende Inhalte",
+        "citation": "Zitat"
+    },
+    "labels": {
+        "toggleMenu": "Menü umschalten",
+        "languagePicker": "Wähle deine Sprache",
+        "headerText": "Antwortgenerierung konfigurieren",
+        "closeButton": "Schließen",
+        "promptTemplate": "Prompt-Vorlage überschreiben",
+        "temperature": "Temperatur",
+        "seed": "Startwert",
+        "minimumSearchScore": "Mindest-Suchscore",
+        "minimumRerankerScore": "Mindest-Reranker-Score",
+        "retrieveCount": "Hole so viele Suchergebnisse ab:",
+        "includeCategory": "Kategorie einbeziehen",
+        "includeCategoryOptions": {
+            "all": "Alle"
+        },
+        "excludeCategory": "Kategorie ausschließen",
+        "useSemanticRanker": "Semantischen Ranker für die Suche verwenden",
+        "useSemanticCaptions": "Semantische Beschreibungen verwenden",
+        "useSuggestFollowupQuestions": "Folgefragen vorschlagen",
+        "useGPT4V": "GPT-Vision-Modell verwenden",
+        "gpt4VInput": {
+            "label": "Eingaben für das GPT-Vision-Modell",
+            "options": {
+                "textAndImages": "Bilder und Text",
+                "images": "Bilder",
+                "texts": "Text"
+            }
+        },
+        "retrievalMode": {
+            "label": "Abrufmodus",
+            "options": {
+                "hybrid": "Vektoren + Text (Hybrid)",
+                "vectors": "Vektoren",
+                "texts": "Text"
+            }
+        },
+        "vector": {
+            "label": "Vektor-Felder (Mehrfachabfrage-Vektorsuche)",
+            "options": {
+                "embedding": "Text-Embeddings",
+                "imageEmbedding": "Bild-Embeddings",
+                "both": "Text- und Bild-Embeddings"
+            }
+        },
+        "useOidSecurityFilter": "OID-Sicherheitsfilter verwenden",
+        "useGroupsSecurityFilter": "Gruppensicherheitsfilter verwenden",
+        "shouldStream": "Antworten als Stream ausgeben"
+    },
+    "helpTexts": {
+        "promptTemplate": "Überschreibt die Eingabeaufforderung, die zur Generierung der Antwort basierend auf der Frage und den Suchergebnissen verwendet wird. Um die bestehende Eingabeaufforderung anzuhängen, anstatt sie vollständig zu ersetzen, beginne deinen Prompt mit '>>>'.",
+        "temperature": "Legt die Temperatur der Anfrage an das LLM fest, das die Antwort generiert. Höhere Temperaturen führen zu kreativeren Antworten, können aber weniger fundiert sein.",
+        "seed": "Legt einen Seed fest, um die Reproduzierbarkeit der Antworten des Modells zu verbessern. Der Seed kann jede ganze Zahl sein.",
+        "searchScore": "Legt einen Mindestwert für Suchergebnisse fest, die von der Azure AI Search zurückgegeben werden. Der Score-Bereich hängt davon ab, ob du den hybriden (Standard-), nur Vektoren- oder nur Textmodus verwendest.",
+        "rerankerScore": "Legt einen Mindestwert für Suchergebnisse fest, die vom semantischen Reranker zurückgegeben werden. Der Score liegt immer zwischen 0 und 4. Je höher der Score, desto semantisch relevanter ist das Ergebnis zur Frage.",
+        "retrieveNumber": "Legt fest, wie viele Suchergebnisse von der Azure AI Search abgerufen werden sollen. Mehr Ergebnisse erhöhen die Wahrscheinlichkeit, die richtige Antwort zu finden, können jedoch dazu führen, dass das Modell 'den Überblick verliert'.",
+        "includeCategory": "Legt eine Kategorie fest, die in die Suchergebnisse einbezogen werden soll. Im Standarddatensatz werden keine Kategorien verwendet.",
+        "excludeCategory": "Legt eine Kategorie fest, die aus den Suchergebnissen ausgeschlossen werden soll. Im Standarddatensatz werden keine Kategorien verwendet.",
+        "useSemanticReranker": "Aktiviert den semantischen Reranker von Azure AI Search, ein Modell, das Suchergebnisse basierend auf ihrer semantischen Ähnlichkeit zur Benutzeranfrage neu bewertet.",
+        "useSemanticCaptions": "Sendet semantische Beschreibungen an das LLM statt des vollständigen Suchergebnisses. Eine semantische Beschreibung wird während des semantischen Ranking-Prozesses aus einem Suchergebnis extrahiert.",
+        "suggestFollowupQuestions": "Lässt das LLM Folgefragen basierend auf der Benutzeranfrage vorschlagen.",
+        "useGPT4Vision": "Verwendet GPT-4-Turbo mit Vision, um Antworten basierend auf Bildern und Text aus dem Index zu generieren.",
+        "vectorFields": "Legt fest, welche Embedding-Felder im Azure AI Search Index durchsucht werden sollen – entweder die Embeddings für 'Bilder und Text', nur 'Bilder' oder nur 'Text'.",
+        "gpt4VisionInputs": "Legt fest, was an das Vision-Modell gesendet wird. 'Bilder und Text' sendet sowohl Bilder als auch Text an das Modell, 'Bilder' sendet nur Bilder und 'Text' nur Text.",
+        "retrievalMode": "Legt den Abrufmodus für die Azure AI Search Anfrage fest. 'Vektoren + Text (Hybrid)' verwendet eine Kombination aus Vektorsuche und Volltextsuche, 'Vektoren' verwendet nur Vektorsuche und 'Text' nur Volltextsuche. Hybrid ist in der Regel optimal.",
+        "streamChat": "Gibt die Antwort kontinuierlich als Stream in der Chat-Oberfläche aus.",
+        "useOidSecurityFilter": "Filtert Suchergebnisse basierend auf der OID des authentifizierten Benutzers.",
+        "useGroupsSecurityFilter": "Filtert Suchergebnisse basierend auf den Gruppen des authentifizierten Benutzers."
+    }
+}

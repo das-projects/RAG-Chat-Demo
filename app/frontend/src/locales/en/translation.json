@@ -1,6 +1,6 @@
 {
-    "pageTitle": "Azure OpenAI + AI Search",
-    "headerTitle": "Azure OpenAI + AI Search",
+    "pageTitle": "Nexible",
+    "headerTitle": "Nexible Customer Support",
     "chat": "Chat",
     "qa": "Ask a question",
     "login": "Login",
@@ -34,13 +34,13 @@
     },
     "developerSettings": "Developer settings",
 
-    "chatEmptyStateTitle": "Chat with your data",
+    "chatEmptyStateTitle": "Nexible Customer Support",
     "chatEmptyStateSubtitle": "Ask anything or try an example",
     "defaultExamples": {
-        "1": "What is included in my Northwind Health Plus plan that is not in standard?",
-        "2": "What happens in a performance review?",
-        "3": "What does a Product Manager do?",
-        "placeholder": "Type a new question (e.g. does my plan cover annual eye exams?)"
+        "1": "What benefits does my Nexible travel insurance offer in the basic package?",
+        "2": "How do I file a claim if my Nexible travel plans are disrupted?",
+        "3": "What dental treatments are covered under my Nexible dental insurance plan?",
+        "placeholder": "Type a new question (e.g. does my Nexible plan cover preventive dental care?)"
     },
     "askTitle": "Ask your data",
     "gpt4vExamples": {
